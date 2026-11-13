@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brooks Holt · Mini Golf</title>
+<meta name="description" content="Brooks Holt mini golf: watch the videos, find every course we've ever played, and shop the merch.">
+<meta property="og:title" content="Brooks Holt · Mini Golf">
+<meta property="og:description" content="Watch the videos, find every course we've ever played, and shop the merch.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f4ee; --panel:#ffffff; --ink:#1b2a22; --muted:#5f6d65; --line:#e3e0d6;
+  --green:#1f7a4a; --green-ink:#ffffff; --green-soft:#e4f2ea; --accent:#f2b705; --accent-ink:#1b2a22;
+  --red:#e62117; --shadow:0 1px 2px rgba(0,0,0,.06),0 10px 30px rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111613; --panel:#19201c; --ink:#e9efe9; --muted:#9aa89f; --line:#2a332e;
+    --green:#3fb373; --green-ink:#08130d; --green-soft:#1d3327; --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111613; --panel:#19201c; --ink:#e9efe9; --muted:#9aa89f; --line:#2a332e;
+  --green:#3fb373; --green-ink:#08130d; --green-soft:#1d3327; --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column}
+h1,h2{font-family:"Bricolage Grotesque",Inter,sans-serif;margin:0;line-height:1.05}
+
+.wrap{width:min(1120px,100% - 32px);margin:0 auto}
+header{padding:56px 0 28px;text-align:center}
+.ball{width:56px;height:56px;border-radius:50%;margin:0 auto 18px;background:radial-gradient(circle at 35% 30%,#fff 0 18%,#f2f2f2 40%,#cfcfcf 100%);box-shadow:inset -3px -4px 0 rgba(0,0,0,.08),0 4px 0 var(--green)}
+header h1{font-size:clamp(40px,7vw,72px);font-weight:800;letter-spacing:-.02em}
+header p{color:var(--muted);font-size:clamp(16px,2.2vw,19px);margin:12px auto 0;max-width:34em}
+
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:20px 0 56px}
+.card{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:22px;overflow:hidden;text-decoration:none;color:inherit;box-shadow:var(--shadow);transition:transform .18s ease,box-shadow .18s ease}
+.card:hover{transform:translateY(-4px)}
+.card:focus-visible{outline:3px solid var(--green);outline-offset:3px}
+.art{aspect-ratio:16/9;position:relative;overflow:hidden}
+.body{padding:20px 22px 22px;display:flex;flex-direction:column;gap:6px;flex:1}
+.body h2{font-size:26px;font-weight:800}
+.body p{margin:0;color:var(--muted);font-size:15px}
+.cta{margin-top:auto;padding-top:14px;font-weight:600;font-size:15px;display:flex;align-items:center;gap:6px}
+.cta::after{content:"→";transition:transform .18s}
+.card:hover .cta::after{transform:translateX(4px)}
+
+/* YouTube card */
+.yt .art{background:#000}
+.yt .art img{width:100%;height:100%;object-fit:cover;display:block;opacity:.92}
+.play{position:absolute;inset:0;margin:auto;width:68px;height:48px;border-radius:14px;background:var(--red);display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.play::before{content:"";border-left:18px solid #fff;border-top:11px solid transparent;border-bottom:11px solid transparent;margin-left:4px}
+.latest{position:absolute;left:12px;right:12px;bottom:10px;color:#fff;font-size:12.5px;font-weight:600;text-shadow:0 1px 6px rgba(0,0,0,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.yt .cta{color:var(--red)}
+
+/* Map card */
+.map .art{background:var(--green-soft)}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.map circle{fill:var(--green);stroke:var(--panel);stroke-width:2.5}
+.map .states{fill:var(--panel);stroke:var(--line);stroke-width:1.5;stroke-linejoin:round}
+.map .cta{color:var(--green)}
+.stats{display:flex;gap:16px;margin-top:4px}
+.stats b{font:800 20px "Bricolage Grotesque",sans-serif;display:block;font-variant-numeric:tabular-nums}
+.stats span{font-size:12px;color:var(--muted)}
+
+/* Merch card */
+.shop .art{background:#fff}
+.slide{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:10px;opacity:0;transition:opacity .6s ease}
+.slide.on{opacity:1}
+.tag{position:absolute;left:10px;bottom:10px;max-width:calc(100% - 20px);background:rgba(27,42,34,.88);color:#fff;font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag b{color:var(--accent);margin-left:6px}
+.pips{position:absolute;right:12px;top:12px;display:flex;gap:5px}
+.pips i{width:7px;height:7px;border-radius:50%;background:rgba(27,42,34,.25)}
+.pips i.on{background:rgba(27,42,34,.85)}
+.shop .cta{color:var(--ink)}
+
+footer{margin-top:auto;padding:24px 0 32px;text-align:center;color:var(--muted);font-size:13px}
+footer a{color:inherit}
+
+@media (max-width:900px){
+  .cards{grid-template-columns:1fr;max-width:520px;margin:0 auto}
+  header{padding:40px 0 16px}
+}
+@media (prefers-reduced-motion:reduce){.card,.cta::after,.tee span{transition:none}}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <div class="ball" aria-hidden="true"></div>
+  <h1>Brooks Holt</h1>
+  <p>Mini golf videos from awesome courses all over the country.</p>
+</header>
+
+<main class="wrap cards">
+  <a class="card yt" href="https://www.youtube.com/@brooksholt" target="_blank" rel="noopener">
+    <div class="art">
+      <img id="yt-thumb" alt="" src="">
+      <div class="play" aria-hidden="true"></div>
+      <div class="latest" id="yt-latest"></div>
+    </div>
+    <div class="body">
+      <h2>YouTube</h2>
+      <p>New mini golf videos with Elisha. Hole-in-ones, challenges and courses you won't believe.</p>
+      <span class="cta">Watch the channel</span>
+    </div>
+  </a>
+
+  <a class="card map" href="courses/">
+    <div class="art"><svg id="dots" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg></div>
+    <div class="body">
+      <h2>Mini Golf Map</h2>
+      <p>Every course we've ever played, with every video. Find one near you.</p>
+      <div class="stats">
+        <div><b id="s-courses">600+</b><span>courses</span></div>
+        <div><b id="s-videos">1,900+</b><span>videos</span></div>
+        <div><b id="s-states">29</b><span>states</span></div>
+      </div>
+      <span class="cta">Find a course</span>
+    </div>
+  </a>
+
+  <a class="card shop" id="shop" href="https://shopbrooksholt.com" target="_blank" rel="noopener">
+    <div class="art" id="slides" aria-live="off"><div class="pips" id="pips" aria-hidden="true"></div><div class="tag" id="ptag" hidden></div></div>
+    <div class="body">
+      <h2>Merch</h2>
+      <p>Skully hats, catchphrase tees and hoodies. Wear them on your next round.</p>
+      <span class="cta">Shop merch</span>
+    </div>
+  </a>
+</main>
+
+<footer class="wrap">© <span id="yr"></span> Brooks Holt · <a href="https://www.youtube.com/@brooksholt" target="_blank" rel="noopener">YouTube</a> · <a href="https://shopbrooksholt.com" target="_blank" rel="noopener">Shop</a></footer>
+
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+// Merch carousel: newest products from shopbrooksholt.com (refreshed daily)
+fetch('data/merch.json').then(r => r.json()).then(items => {
+  if (!items.length) return;
+  const box = document.getElementById('slides'), tag = document.getElementById('ptag'), pips = document.getElementById('pips'), card = document.getElementById('shop');
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  items.forEach((p, k) => {
+    const img = new Image();
+    img.className = 'slide' + (k === 0 ? ' on' : '');
+    img.alt = p.name; img.decoding = 'async';
+    if (k > 0) img.loading = 'lazy';
+    img.src = p.image;
+    box.insertBefore(img, pips);
+    pips.insertAdjacentHTML('beforeend', `<i${k === 0 ? ' class="on"' : ''}></i>`);
+  });
+  const slides = box.querySelectorAll('.slide'), dots = pips.querySelectorAll('i');
+  let i = 0, paused = false;
+  const show = k => {
+    slides[i].classList.remove('on'); dots[i].classList.remove('on');
+    i = k; slides[i].classList.add('on'); dots[i].classList.add('on');
+    tag.innerHTML = esc(items[i].name) + (items[i].price ? `<b>${esc(items[i].price)}</b>` : '');
+    card.href = items[i].url;
+  };
+  tag.hidden = false; show(0);
+  card.addEventListener('mouseenter', () => paused = true);
+  card.addEventListener('mouseleave', () => paused = false);
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches && items.length > 1) {
+    setInterval(() => { if (!paused && !document.hidden) show((i + 1) % items.length); }, 3000);
+  }
+}).catch(() => {});
+
+// Latest video + dot map from the daily-updated summary
+fetch('data/stats.json').then(r => r.json()).then(s => {
+  const n = x => x.toLocaleString();
+  document.getElementById('s-courses').textContent = n(s.courses);
+  document.getElementById('s-videos').textContent = n(s.videos);
+  document.getElementById('s-states').textContent = s.states;
+  if (s.latest) {
+    document.getElementById('yt-thumb').src = `https://i.ytimg.com/vi/${s.latest.id}/hqdefault.jpg`;
+    document.getElementById('yt-latest').textContent = 'Latest: ' + (s.latest.title || s.latest.course);
+  }
+  // Simple projection of the lower 48 (lng -125..-66, lat 24..50)
+  const W = 1000, H = 620, x = lng => (lng + 125) / 59 * W, y = lat => (50 - lat) / 26 * H;
+  const dots = s.pts
+    .filter(([la, lo]) => la > 24 && la < 50 && lo > -125 && lo < -66)
+    .map(([la, lo]) => `<circle cx="${x(lo).toFixed(1)}" cy="${y(la).toFixed(1)}" r="9"/>`).join('');
+  const svg = document.getElementById('dots');
+  svg.innerHTML = dots;
+  fetch('data/us-outline.json').then(r => r.json()).then(o => {
+    svg.innerHTML = `<path class="states" d="${o.d}"/>` + dots;
+  }).catch(() => {});
+}).catch(() => {
+  document.getElementById('yt-thumb').src = 'https://i.ytimg.com/vi/4lauAr3n9gc/hqdefault.jpg';
+});
+</script>
+</body>
+</html>

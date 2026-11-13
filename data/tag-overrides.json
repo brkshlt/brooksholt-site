@@ -1,0 +1,4 @@
+{
+  "_note": "Hand-made tag fixes. Use the course slug from its web address (brooksholt.com/courses/#/course/<slug>). Example: \"mayday-golf\": {\"add\": [\"Volcano\"], \"remove\": [\"Hardest\"]}",
+  "courses": {}
+}

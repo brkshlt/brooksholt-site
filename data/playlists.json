@@ -1,0 +1,25 @@
+{
+  "_note": "Public YouTube playlists that become tags on the site. Edit freely.",
+  "playlists": [
+    {
+      "tag": "Best Mini Golf Courses",
+      "url": "https://www.youtube.com/playlist?list=PL7AF1EBopDNVFf-gR7xEk4AU-zaTQ5g89"
+    },
+    {
+      "tag": "Craziest Mini Golf Courses",
+      "url": "https://www.youtube.com/playlist?list=PL7AF1EBopDNVqdQKY0ynNQmhLCuqy6WZZ"
+    },
+    {
+      "tag": "Old School",
+      "url": "https://www.youtube.com/playlist?list=PL7AF1EBopDNWA4Czt4wXstjQlmi0pW7B_"
+    },
+    {
+      "tag": "High-Tech",
+      "url": "https://www.youtube.com/playlist?list=PL7AF1EBopDNX4TS08LaJapY6qQ1fYeP6L"
+    },
+    {
+      "tag": "Mega Mini Golf",
+      "url": "https://www.youtube.com/playlist?list=PL7AF1EBopDNUUcIqMHiedMtalxZfhrZh2"
+    }
+  ]
+}
