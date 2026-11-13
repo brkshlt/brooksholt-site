@@ -98,7 +98,7 @@ footer a{color:inherit}
 </header>
 
 <main class="wrap cards">
-  <a class="card yt" href="https://www.youtube.com/@brooksholt" target="_blank" rel="noopener">
+  <a class="card yt" data-gc="youtube" data-gc-title="YouTube channel (home page)" href="https://www.youtube.com/@brooksholt" target="_blank" rel="noopener">
     <div class="art">
       <img id="yt-thumb" alt="" src="">
       <div class="play" aria-hidden="true"></div>
@@ -111,7 +111,7 @@ footer a{color:inherit}
     </div>
   </a>
 
-  <a class="card map" href="courses/">
+  <a class="card map" data-gc="course-finder" data-gc-title="Mini Golf Map (home page)" href="courses/">
     <div class="art"><svg id="dots" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg></div>
     <div class="body">
       <h2>Mini Golf Map</h2>
@@ -125,7 +125,7 @@ footer a{color:inherit}
     </div>
   </a>
 
-  <a class="card shop" id="shop" href="https://shopbrooksholt.com" target="_blank" rel="noopener">
+  <a class="card shop" id="shop" data-gc="merch" href="https://shopbrooksholt.com" target="_blank" rel="noopener">
     <div class="art" id="slides" aria-live="off"><div class="pips" id="pips" aria-hidden="true"></div><div class="tag" id="ptag" hidden></div></div>
     <div class="body">
       <h2>Merch</h2>
@@ -161,6 +161,7 @@ fetch('data/merch.json').then(r => r.json()).then(items => {
     i = k; slides[i].classList.add('on'); dots[i].classList.add('on');
     tag.innerHTML = esc(items[i].name) + (items[i].price ? `<b>${esc(items[i].price)}</b>` : '');
     card.href = items[i].url;
+    card.setAttribute('data-gc-title', 'Merch: ' + items[i].name);
   };
   tag.hidden = false; show(0);
   card.addEventListener('mouseenter', () => paused = true);
@@ -194,5 +195,23 @@ fetch('data/stats.json').then(r => r.json()).then(s => {
   document.getElementById('yt-thumb').src = 'https://i.ytimg.com/vi/4lauAr3n9gc/hqdefault.jpg';
 });
 </script>
+<script>
+// Visitor stats: GoatCounter (privacy-friendly, no cookies, no personal data).
+// Dashboard: https://brooksholt.goatcounter.com
+function gcCount(path, title, event, tries) {
+  tries = tries || 0;
+  if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({path: path, title: title, event: !!event});
+  else if (tries < 20) setTimeout(function () { gcCount(path, title, event, tries + 1); }, 250);
+}
+// Clicks on anything marked data-gc="name" are counted as "click-name"
+document.addEventListener('click', function (e) {
+  var a = e.target.closest('[data-gc]');
+  if (!a) return;
+  var name = a.getAttribute('data-gc');
+  if (name === 'merch') name = 'merch-' + ((a.href || '').split('/products/')[1] || 'store').split(/[?#]/)[0];
+  gcCount('click-' + name, a.getAttribute('data-gc-title') || (a.innerText || name).trim().split('\n')[0].slice(0, 80), true);
+});
+</script>
+<script data-goatcounter="https://brooksholt.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
