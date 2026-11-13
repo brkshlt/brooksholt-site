@@ -151,7 +151,7 @@ main{flex:1;display:grid;grid-template-columns:400px 1fr;min-height:0}
     <div class="stat"><b id="s-videos">–</b><span>videos</span></div>
     <div class="stat"><b id="s-states">–</b><span>states</span></div>
   </div>
-  <a class="shop-btn" href="https://shopbrooksholt.com" target="_blank" rel="noopener">Shop merch</a>
+  <a class="shop-btn" data-gc="shop-header" data-gc-title="Shop merch (course finder header)" href="https://shopbrooksholt.com" target="_blank" rel="noopener">Shop merch</a>
 </header>
 
 <main>
@@ -234,7 +234,7 @@ function drawStays(){
       title: p.name, zIndexOffset: 1000
     }).bindPopup(`<div class="lodge-pop"><b>${esc(p.name)}</b>${p.label ? `<span class="plabel">${esc(p.label)}</span>` : ''}
       <p>${esc(p.blurb || '')}${nearby ? `<br><b>${nearby}</b> courses within 3 miles` : ''}${p.exactPin === false ? '<br><i>Approximate location</i>' : ''}</p>
-      <a href="${esc(bookUrl(p))}" target="_blank" rel="noopener sponsored">See rooms →</a></div>`).addTo(stayLayer);
+      <a data-gc="stay-${esc(p.id)}-map" data-gc-title="See rooms (map pin): ${esc(p.name)}" href="${esc(bookUrl(p))}" target="_blank" rel="noopener sponsored">See rooms →</a></div>`).addTo(stayLayer);
   });
 }
 document.getElementById('showStays').addEventListener('change', e => e.target.checked ? stayLayer.addTo(map) : stayLayer.remove());
@@ -249,7 +249,7 @@ function stayHtml(c){
     <div class="stay-item"><div class="stay-icon">${STAY_ICON[p.type] || '🏨'}</div><div>
       <b>${esc(p.name)}${p.label ? `<span class="plabel">${esc(p.label)}</span>` : ''}</b>
       <p>${d < 0.2 ? 'Walking distance' : (d < 1 ? d.toFixed(1) : Math.round(d * 10) / 10) + ' miles away'} · ${esc(p.town || '')}<br>${esc(p.blurb || '')}</p>
-      <a class="btn primary" href="${esc(bookUrl(p))}" target="_blank" rel="noopener sponsored">See rooms</a>
+      <a class="btn primary" data-gc="stay-${esc(p.id)}-course" data-gc-title="See rooms (course page): ${esc(p.name)}" href="${esc(bookUrl(p))}" target="_blank" rel="noopener sponsored">See rooms</a>
     </div></div>`).join('')}</div>`;
 }
 
@@ -360,8 +360,10 @@ $('#near').addEventListener('click', () => {
 });
 
 function openCourse(c){
+  const isNew = activeSlug !== c.slug;
   activeSlug = c.slug;
   document.title = `${c.name} · Find A Course · Brooks Holt`;
+  if (isNew) gcCount(`/courses/${c.slug}`, `${c.name} (${ab(c.state)})`, false);
   $('#d-name').textContent = c.name;
   const first = c.groups.flatMap(g => g.videos).map(v => v.d).filter(Boolean).sort()[0];
   $('#d-sub').innerHTML = esc(`${c.state === 'At Sea' ? 'Cruise ship' : (c.state || '')} · Played ${c.n} time${c.n > 1 ? 's' : ''}${first ? ' since ' + first.slice(0, 4) : ''}`)
@@ -381,13 +383,13 @@ function openCourse(c){
   $('#d-body').innerHTML = `
     <div class="player"><iframe id="player" src="https://www.youtube-nocookie.com/embed/${c.latest.id}?rel=0" title="Brooks Holt video" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
     <div class="actions">
-      <a class="btn primary" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}">Directions</a>
+      <a class="btn primary" data-gc="directions-${c.slug}" data-gc-title="Directions: ${esc(c.name)}" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}">Directions</a>
       <a class="btn" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name)}&query_place_id=">Course info</a>
       <button class="btn" id="share" type="button">Copy link</button>
     </div>
     ${groupsHtml}
     ${stayHtml(c)}
-    <div class="merch"><p><b>Heading out to play?</b>Grab a Skully hat or tee before your round.</p><a class="shop-btn" href="https://shopbrooksholt.com" target="_blank" rel="noopener">Shop</a></div>`;
+    <div class="merch"><p><b>Heading out to play?</b>Grab a Skully hat or tee before your round.</p><a class="shop-btn" data-gc="shop-course-page" data-gc-title="Shop (course page)" href="https://shopbrooksholt.com" target="_blank" rel="noopener">Shop</a></div>`;
   $('#detail').classList.add('open');
   $('#detail').setAttribute('aria-hidden', 'false');
   $('#d-body').scrollTop = 0;
@@ -432,5 +434,23 @@ $('#signup').addEventListener('submit', e => {
   $('#signup-msg').textContent = 'Prototype: email signup is not connected yet.';
 });
 </script>
+<script>
+// Visitor stats: GoatCounter (privacy-friendly, no cookies, no personal data).
+// Dashboard: https://brooksholt.goatcounter.com
+function gcCount(path, title, event, tries) {
+  tries = tries || 0;
+  if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({path: path, title: title, event: !!event});
+  else if (tries < 20) setTimeout(function () { gcCount(path, title, event, tries + 1); }, 250);
+}
+// Clicks on anything marked data-gc="name" are counted as "click-name"
+document.addEventListener('click', function (e) {
+  var a = e.target.closest('[data-gc]');
+  if (!a) return;
+  var name = a.getAttribute('data-gc');
+  if (name === 'merch') name = 'merch-' + ((a.href || '').split('/products/')[1] || 'store').split(/[?#]/)[0];
+  gcCount('click-' + name, a.getAttribute('data-gc-title') || (a.innerText || name).trim().split('\n')[0].slice(0, 80), true);
+});
+</script>
+<script data-goatcounter="https://brooksholt.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
