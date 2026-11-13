@@ -7,6 +7,7 @@
 <meta name="description" content="Brooks Holt mini golf: watch the videos, find every course we've ever played, and shop the merch.">
 <meta property="og:title" content="Brooks Holt · Mini Golf">
 <meta property="og:description" content="Watch the videos, find every course we've ever played, and shop the merch.">
+<link rel="icon" type="image/png" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -32,7 +33,9 @@ h1,h2{font-family:"Bricolage Grotesque",Inter,sans-serif;margin:0;line-height:1.
 
 .wrap{width:min(1120px,100% - 32px);margin:0 auto}
 header{padding:56px 0 28px;text-align:center}
-.ball{width:56px;height:56px;border-radius:50%;margin:0 auto 18px;background:radial-gradient(circle at 35% 30%,#fff 0 18%,#f2f2f2 40%,#cfcfcf 100%);box-shadow:inset -3px -4px 0 rgba(0,0,0,.08),0 4px 0 var(--green)}
+.logo{display:block;height:clamp(96px,14vw,132px);width:auto;margin:0 auto 18px;
+  /* ~2pt white outline traced around the artwork */
+  filter:drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff)}
 header h1{font-size:clamp(40px,7vw,72px);font-weight:800;letter-spacing:-.02em}
 header p{color:var(--muted);font-size:clamp(16px,2.2vw,19px);margin:12px auto 0;max-width:34em}
 
@@ -89,7 +92,7 @@ footer a{color:inherit}
 </head>
 <body>
 <header class="wrap">
-  <div class="ball" aria-hidden="true"></div>
+  <img class="logo" src="logo.png" width="401" height="480" alt="Diamond Skully logo">
   <h1>Brooks Holt</h1>
   <p>Mini golf videos from awesome courses all over the country.</p>
 </header>
