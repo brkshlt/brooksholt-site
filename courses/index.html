@@ -105,6 +105,18 @@ main{flex:1;display:grid;grid-template-columns:400px 1fr;min-height:0}
 .merch{margin-top:24px;padding:14px 16px;border-radius:12px;background:var(--green-soft);display:flex;gap:12px;align-items:center}
 .merch p{margin:0;flex:1;font-size:14px}
 .merch b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:17px}
+.stay{margin-top:24px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.stay h4{margin:0;padding:10px 16px;font:600 12px Inter,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--line)}
+.stay-item{padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.stay-item+.stay-item{border-top:1px solid var(--line)}
+.stay-icon{font-size:26px;line-height:1}
+.stay-item b{font-family:"Bricolage Grotesque",sans-serif;font-size:17px;display:block}
+.stay-item p{margin:4px 0 8px;font-size:13.5px;color:var(--muted)}
+.plabel{display:inline-block;font:700 10.5px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;background:var(--accent);color:var(--accent-ink);border-radius:4px;padding:2px 6px;margin-left:6px;vertical-align:2px}
+.lodge-pin{width:30px;height:30px;border-radius:9px;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.4);display:grid;place-items:center;font-size:16px}
+.lodge-pop b{font-size:14px}
+.lodge-pop p{margin:4px 0 8px}
+.lodge-pop a{font-weight:600;color:#1f7a4a}
 .proto{font-size:11px;color:var(--muted);text-align:center;padding:6px;border-top:1px solid var(--line);background:var(--panel)}
 
 /* Map pins */
@@ -157,7 +169,7 @@ main{flex:1;display:grid;grid-template-columns:400px 1fr;min-height:0}
         <button class="near" id="near" type="button">📍 Near me</button>
       </div>
       <div class="chips" id="chips" role="group" aria-label="Filter by tag"></div>
-      <div class="count"><span id="count"></span><label><input type="checkbox" id="showClosed"> Show closed courses</label></div>
+      <div class="count"><span id="count"></span><label><input type="checkbox" id="showStays" checked> 🏨 Places to stay</label><label><input type="checkbox" id="showClosed"> Show closed</label></div>
     </div>
     <div id="list" role="list"></div>
     <div class="signup">
@@ -206,6 +218,41 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const cluster = L.markerClusterGroup({showCoverageOnHover: false, maxClusterRadius: 45});
 map.addLayer(cluster);
 
+// ---- Places to stay (partners), from data/lodging.json ----
+let lodging = [];
+const stayLayer = L.layerGroup().addTo(map);
+const STAY_ICON = {hotel: '🏨', rental: '🏡', resort: '🌴', campground: '⛺'};
+const bookUrl = p => p.url + (p.url.includes('?') ? '&' : '?') + 'utm_source=brooksholt.com&utm_medium=referral&utm_campaign=find-a-course';
+const lodgingReady = fetch('../data/lodging.json').then(r => r.json()).then(d => {
+  lodging = (d.places || []).filter(p => p.name && p.url && isFinite(p.lat) && isFinite(p.lng));
+}).catch(() => {});
+function drawStays(){
+  lodging.forEach(p => {
+    const nearby = courses.filter(c => !isClosed(c) && miles(p, c) <= 3).length;
+    L.marker([p.lat, p.lng], {
+      icon: L.divIcon({className: '', html: `<div class="lodge-pin">${STAY_ICON[p.type] || '🏨'}</div>`, iconSize: [30, 30], iconAnchor: [15, 15]}),
+      title: p.name, zIndexOffset: 1000
+    }).bindPopup(`<div class="lodge-pop"><b>${esc(p.name)}</b>${p.label ? `<span class="plabel">${esc(p.label)}</span>` : ''}
+      <p>${esc(p.blurb || '')}${nearby ? `<br><b>${nearby}</b> courses within 3 miles` : ''}${p.exactPin === false ? '<br><i>Approximate location</i>' : ''}</p>
+      <a href="${esc(bookUrl(p))}" target="_blank" rel="noopener sponsored">See rooms →</a></div>`).addTo(stayLayer);
+  });
+}
+document.getElementById('showStays').addEventListener('change', e => e.target.checked ? stayLayer.addTo(map) : stayLayer.remove());
+
+function staysNear(c){
+  return lodging.map(p => ({p, d: miles(p, c)})).filter(x => x.d <= (x.p.radiusMiles || 10)).sort((a, b) => a.d - b.d);
+}
+function stayHtml(c){
+  const list = staysNear(c);
+  if (!list.length) return '';
+  return `<div class="stay"><h4>Where we stay nearby</h4>${list.map(({p, d}) => `
+    <div class="stay-item"><div class="stay-icon">${STAY_ICON[p.type] || '🏨'}</div><div>
+      <b>${esc(p.name)}${p.label ? `<span class="plabel">${esc(p.label)}</span>` : ''}</b>
+      <p>${d < 0.2 ? 'Walking distance' : (d < 1 ? d.toFixed(1) : Math.round(d * 10) / 10) + ' miles away'} · ${esc(p.town || '')}<br>${esc(p.blurb || '')}</p>
+      <a class="btn primary" href="${esc(bookUrl(p))}" target="_blank" rel="noopener sponsored">See rooms</a>
+    </div></div>`).join('')}</div>`;
+}
+
 function latestVideo(c){
   let best = null;
   c.groups.forEach(g => g.videos.forEach(v => { if (!best || (v.d || '') > (best.d || '')) best = v; }));
@@ -249,7 +296,7 @@ fetch('../data/courses.json').then(r => r.json()).then(data => {
     markers[c.slug] = m;
   });
   render();
-  route();
+  lodgingReady.then(() => { drawStays(); route(); });
 });
 
 function filtered(){
@@ -339,6 +386,7 @@ function openCourse(c){
       <button class="btn" id="share" type="button">Copy link</button>
     </div>
     ${groupsHtml}
+    ${stayHtml(c)}
     <div class="merch"><p><b>Heading out to play?</b>Grab a Skully hat or tee before your round.</p><a class="shop-btn" href="https://shopbrooksholt.com" target="_blank" rel="noopener">Shop</a></div>`;
   $('#detail').classList.add('open');
   $('#detail').setAttribute('aria-hidden', 'false');
