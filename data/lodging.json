@@ -1,0 +1,19 @@
+{
+  "_note": "Places to stay shown on brooksholt.com/courses. Edit by hand. 'label' must stay visible for partners (FTC disclosure). For Airbnbs use an approximate neighborhood location, never the exact house, and set exactPin to false. 'radiusMiles' = how far away a course can be and still show this place on its page.",
+  "places": [
+    {
+      "id": "hilton-garden-inn-pigeon-forge",
+      "name": "Hilton Garden Inn Pigeon Forge",
+      "type": "hotel",
+      "label": "Partner",
+      "town": "Pigeon Forge, TN",
+      "address": "2481 Teaster Lane, Pigeon Forge, TN 37863",
+      "lat": 35.81072,
+      "lng": -83.57498,
+      "exactPin": true,
+      "radiusMiles": 10,
+      "url": "https://www.hilton.com/en/hotels/pgfgigi-hilton-garden-inn-pigeon-forge/",
+      "blurb": "Our home base when we film in Pigeon Forge. Indoor pool, free parking, and a short walk to five mini golf courses."
+    }
+  ]
+}
