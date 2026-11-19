@@ -1,0 +1,1051 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mini Golf Scorecard | Brooks Holt</title>
+<meta name="description" content="Free mini golf scorecard from Brooks Holt. Up to 6 players, 9, 18 or 36 holes, works offline.">
+<meta name="theme-color" content="#1f7a4a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Scorecard">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f4ee; --panel:#ffffff; --ink:#1b2a22; --muted:#5f6d65; --line:#e3e0d6; --line2:#cfcbbf;
+  --green:#1f7a4a; --green-ink:#ffffff; --green-soft:#e4f2ea; --accent:#f2b705; --accent-ink:#1b2a22; --accent-soft:#fdf1c7; --ace-ink:#7a5c00;
+  --red:#c0392b; --red-soft:#fbe7e4; --shadow:0 1px 2px rgba(0,0,0,.06),0 10px 30px rgba(0,0,0,.08);
+  --scrim:rgba(15,22,18,.55);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111613; --panel:#19201c; --ink:#e9efe9; --muted:#9aa89f; --line:#2a332e; --line2:#3a453f;
+    --green:#3fb373; --green-ink:#08130d; --green-soft:#1d3327; --accent-soft:#3a3214; --ace-ink:#f2b705;
+    --red:#ff7a6b; --red-soft:#3a1f1c; --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.45);
+    --scrim:rgba(0,0,0,.65);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111613; --panel:#19201c; --ink:#e9efe9; --muted:#9aa89f; --line:#2a332e; --line2:#3a453f;
+  --green:#3fb373; --green-ink:#08130d; --green-soft:#1d3327; --accent-soft:#3a3214; --ace-ink:#f2b705;
+  --red:#ff7a6b; --red-soft:#3a1f1c; --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.45);
+  --scrim:rgba(0,0,0,.65);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Inter,system-ui,-apple-system,sans-serif;min-height:100vh;-webkit-tap-highlight-color:transparent}
+h1,h2,h3{font-family:"Bricolage Grotesque",Inter,sans-serif;margin:0;line-height:1.1}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+input{font:inherit;color:inherit}
+a{color:var(--green)}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px calc(32px + env(safe-area-inset-bottom))}
+.hidden{display:none !important}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:10px;padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top));background:var(--bg);position:sticky;top:0;z-index:20;border-bottom:1px solid var(--line)}
+.top img{height:34px;width:auto}
+.top .t{flex:1;min-width:0}
+.top .t b{display:block;font:800 18px "Bricolage Grotesque",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .t span{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;color:var(--ink)}
+.iconbtn:active{background:var(--line)}
+.iconbtn svg{width:22px;height:22px}
+
+/* buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:54px;border-radius:16px;font-weight:700;font-size:17px;background:var(--panel);border:1px solid var(--line2);padding:0 16px}
+.btn.primary{background:var(--green);color:var(--green-ink);border-color:transparent}
+.btn.gold{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.quiet{background:transparent;border-color:transparent;color:var(--muted);font-weight:600;min-height:44px;font-size:15px}
+.btn:active{transform:scale(.985)}
+.btn[disabled]{opacity:.45}
+.stack{display:grid;gap:10px}
+
+/* home */
+.hero{text-align:center;padding:28px 0 20px}
+.hero img{height:110px;width:auto;margin-bottom:12px}
+.hero h1{font-size:40px;font-weight:800;letter-spacing:-.02em}
+.hero p{color:var(--muted);margin:8px auto 0;max-width:24em}
+.resume{background:var(--panel);border:2px solid var(--green);border-radius:18px;padding:14px 16px;text-align:left;width:100%;display:block;box-shadow:var(--shadow)}
+.resume small{color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:11.5px}
+.resume b{display:block;font-size:17px;margin-top:2px}
+.resume span{color:var(--muted);font-size:14px}
+.sect{margin-top:28px}
+.sect h2{font-size:20px;font-weight:800;margin-bottom:10px}
+.list{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-top:1px solid var(--line);width:100%;text-align:left}
+.row:first-child{border-top:0}
+.row:active{background:var(--green-soft)}
+.row .m{flex:1;min-width:0}
+.row .m b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .m span{display:block;color:var(--muted);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .r{color:var(--muted);font-size:13.5px;flex:none;text-align:right}
+.empty{color:var(--muted);font-size:14.5px;padding:14px;text-align:center}
+.foot{text-align:center;color:var(--muted);font-size:13px;margin-top:32px}
+.foot a{color:var(--muted)}
+
+/* setup */
+.field{margin-top:22px}
+.field>label,.field>.lab{display:block;font-weight:700;font-size:14px;margin-bottom:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.pl{display:flex;gap:8px;margin-bottom:8px}
+.pl input{flex:1;min-width:0;height:52px;border-radius:14px;border:1px solid var(--line2);background:var(--panel);padding:0 14px;font-size:17px}
+.pl input:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:transparent}
+.pl .dot{width:40px;height:40px;flex:none;align-self:center;border-radius:50%;border:1px solid rgba(0,0,0,.25);position:relative;
+  background-image:radial-gradient(circle at 32% 30%,rgba(255,255,255,.85) 0 12%,rgba(255,255,255,0) 45%),radial-gradient(circle at 70% 75%,rgba(0,0,0,.18),rgba(0,0,0,0) 60%)}
+.pl .dot::after{content:"";position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;border-radius:50%;background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6d65' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") center/11px no-repeat;border:1px solid var(--line2)}
+.balls{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:18px 0 6px}
+.balls button{display:grid;justify-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.balls button i{display:block;width:54px;height:54px;border-radius:50%;border:1px solid rgba(0,0,0,.25);
+  background-image:radial-gradient(circle at 32% 30%,rgba(255,255,255,.85) 0 12%,rgba(255,255,255,0) 45%),radial-gradient(circle at 70% 75%,rgba(0,0,0,.18),rgba(0,0,0,0) 60%)}
+.balls button.on i{outline:3px solid var(--green);outline-offset:3px}
+.balls button.on{color:var(--ink)}
+.card thead th .bar{box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.pl button{width:52px;flex:none;border-radius:14px;border:1px solid var(--line2);background:var(--panel);color:var(--muted)}
+.addp{height:48px;border-radius:14px;border:1.5px dashed var(--line2);width:100%;color:var(--green);font-weight:700}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--line);border-radius:14px;padding:4px;gap:4px}
+.seg button{height:46px;border-radius:11px;font-weight:700;font-size:17px;color:var(--muted)}
+.seg button.on{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg small{display:block;font-size:11px;font-weight:600;margin-top:-3px}
+.pick{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;border-radius:14px;border:1px solid var(--line2);background:var(--panel);padding:10px 14px;text-align:left}
+.pick .m{flex:1;min-width:0}
+.pick .m b{display:block;font-weight:600}
+.pick .m span{display:block;color:var(--muted);font-size:13.5px}
+.pick.none .m b{color:var(--muted);font-weight:500}
+.pick+.pick{margin-top:8px}
+.hint{color:var(--muted);font-size:13.5px;margin-top:8px}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--green-soft);color:var(--green);vertical-align:1px;margin-left:4px;white-space:nowrap}
+.badge.osm{background:var(--line);color:var(--muted)}
+
+/* card */
+.cardwrap{padding:0 8px calc(150px + env(safe-area-inset-bottom))}
+.watch{display:flex;align-items:center;gap:8px;margin:10px 8px 4px;font-size:14px;font-weight:600;text-decoration:none}
+.watch svg{width:20px;height:20px;flex:none}
+table.card{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;margin-top:8px;font-variant-numeric:tabular-nums}
+.card th,.card td{text-align:center;padding:0;border-bottom:1px solid var(--line)}
+.card thead th{position:sticky;top:var(--toph,61px);z-index:5;background:var(--bg);font-size:13px;font-weight:700;height:44px;padding:0 2px;border-bottom:2px solid var(--line2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card thead th .nm{display:block;overflow:hidden;text-overflow:ellipsis}
+.card thead th .bar{display:block;height:4px;border-radius:2px;margin:3px 6px 0}
+.card col.h{width:42px}.card col.p{width:44px}
+.card td.hn{font-weight:800;font-family:"Bricolage Grotesque",sans-serif;font-size:18px}
+.card td.par button{width:100%;height:54px;color:var(--muted);font-weight:600;font-size:15px}
+.card td.sc button{width:100%;height:54px;font-size:21px;font-weight:700;display:grid;place-items:center;position:relative}
+.card td.sc button span{display:grid;place-items:center;width:40px;height:40px;border-radius:12px}
+.card td.sc button:active span{background:var(--line)}
+.card td.sc button.empty span{color:var(--muted);opacity:.45;font-weight:500}
+.card td.sc .under span{background:var(--green-soft);color:var(--green)}
+.card td.sc .over2 span{background:var(--red-soft);color:var(--red)}
+.card td.sc .ace span{background:var(--accent);color:var(--accent-ink);border-radius:50%}
+.card td.sc .next span{outline:2px dashed var(--green);outline-offset:-2px}
+.card tr.sub td{background:var(--panel);font-weight:700;height:44px;font-size:16px}
+.card tr.sub td.lbl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;line-height:1.1}
+.card tr.secth td{text-align:left;padding:18px 6px 8px;font:800 17px "Bricolage Grotesque",sans-serif;border-bottom:2px solid var(--line2)}
+.card tr.secth td small{display:block;font:600 12px Inter,sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.cardactions{padding:20px 8px 0;display:grid;gap:10px}
+
+/* totals dock */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--panel);border-top:1px solid var(--line2);box-shadow:0 -6px 24px rgba(0,0,0,.08);padding:8px 8px calc(8px + env(safe-area-inset-bottom))}
+.dock .in{max-width:560px;margin:0 auto}
+.dock .tots{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px}
+.dock .tot{text-align:center;padding:4px 2px;border-radius:12px;min-width:0}
+.dock .tot.lead{background:var(--accent-soft)}
+.dock .tot .n{font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dock .tot .s{font:800 22px "Bricolage Grotesque",sans-serif;line-height:1.1}
+.dock .tot .r{font-size:12px;font-weight:700;color:var(--muted)}
+.dock .tot .r.u{color:var(--green)}
+.dock .btn{min-height:48px;margin-top:8px;font-size:16px}
+
+/* sheets */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:60;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s ease}
+.sheet{background:var(--panel);width:100%;max-width:560px;border-radius:24px 24px 0 0;padding:10px 16px calc(18px + env(safe-area-inset-bottom));box-shadow:var(--shadow);animation:up .2s ease;max-height:92vh;display:flex;flex-direction:column}
+.sheet.tall{height:92vh}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line2);margin:0 auto 10px;flex:none}
+.sh{display:flex;align-items:center;gap:8px;flex:none}
+.sh .t{flex:1;min-width:0}
+.sh h3{font-size:24px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sh p{margin:2px 0 0;color:var(--muted);font-size:15px}
+@keyframes fade{from{opacity:0}}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+
+/* score picker */
+.who{display:flex;gap:6px;margin:12px 0 4px;overflow-x:auto;scrollbar-width:none}
+.who button{flex:none;padding:6px 12px;border-radius:999px;background:var(--line);font-size:14px;font-weight:600;color:var(--muted)}
+.who button.on{background:var(--green);color:var(--green-ink)}
+.who button .v{margin-left:6px;font-weight:800}
+.nums{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.nums button{height:76px;border-radius:18px;background:var(--bg);border:1.5px solid var(--line2);font:800 32px "Bricolage Grotesque",sans-serif;position:relative}
+.nums button small{position:absolute;left:0;right:0;bottom:6px;font:700 10.5px Inter,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.nums button.ace{background:var(--accent-soft);border-color:var(--accent)}
+.nums button.ace small{color:var(--ace-ink)}
+.pick .m b .badge,.row .m b .badge{display:inline-block}
+.results .row .m b{white-space:normal}
+.nums button.isp{border-color:var(--green)}
+.nums button.cur{background:var(--green);color:var(--green-ink);border-color:var(--green)}
+.nums button.cur small{color:var(--green-ink)}
+.nums button:active{transform:scale(.96)}
+.stepper{display:grid;grid-template-columns:76px 1fr 76px;gap:10px;margin-top:10px;align-items:center}
+.stepper button{height:76px;border-radius:18px;background:var(--bg);border:1.5px solid var(--line2);display:grid;place-items:center}
+.stepper button svg{width:30px;height:30px}
+.stepper .val{text-align:center;font:800 46px "Bricolage Grotesque",sans-serif;line-height:1}
+.stepper .val small{display:block;font:600 13px Inter,sans-serif;color:var(--muted);margin-top:2px}
+.sheetbtns{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:14px}
+
+/* course picker */
+.search{display:flex;gap:8px;margin-top:12px;flex:none}
+.search input{flex:1;min-width:0;height:50px;border-radius:14px;border:1px solid var(--line2);background:var(--bg);padding:0 14px;font-size:17px}
+.search input:focus{outline:2px solid var(--green);outline-offset:-1px}
+.near{flex:none;height:50px;border-radius:14px;background:var(--green-soft);color:var(--green);font-weight:700;padding:0 14px;display:flex;align-items:center;gap:6px}
+.near svg{width:18px;height:18px}
+.results{flex:1;overflow-y:auto;margin:12px -16px 0;padding:0 16px;-webkit-overflow-scrolling:touch}
+.results .gh{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 2px 6px}
+.results .gh:first-child{margin-top:2px}
+.status{color:var(--muted);font-size:14px;padding:10px 2px}
+
+/* results */
+.winner{text-align:center;padding:26px 0 8px}
+.winner .trophy{font-size:56px;line-height:1}
+.winner h1{font-size:36px;font-weight:800;margin-top:8px;letter-spacing:-.01em}
+.winner p{color:var(--muted);margin:6px 0 0}
+.stand{margin-top:18px}
+.stand .row{padding:14px}
+.stand .pos{width:30px;height:30px;border-radius:50%;background:var(--line);display:grid;place-items:center;font-weight:800;flex:none;font-size:15px}
+.stand .row:first-child .pos{background:var(--accent);color:var(--accent-ink)}
+.stand .sc{font:800 26px "Bricolage Grotesque",sans-serif;flex:none}
+.stand .rp{width:46px;text-align:right;font-weight:700;color:var(--muted);flex:none}
+.stand .rp.u{color:var(--green)}
+.preview{margin-top:18px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--panel)}
+.preview img{display:block;width:100%;height:auto}
+
+/* toast + celebration */
+.toast{position:fixed;left:50%;bottom:calc(170px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14.5px;z-index:90;box-shadow:var(--shadow);max-width:calc(100% - 32px);text-align:center;animation:fade .2s}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:80}
+.acebanner{position:fixed;left:50%;top:30%;transform:translate(-50%,-50%);z-index:81;pointer-events:none;font:800 44px "Bricolage Grotesque",sans-serif;color:var(--accent);-webkit-text-stroke:2px #1b2a22;text-align:center;white-space:nowrap;animation:pop 1.6s ease forwards}
+.acebanner small{display:block;font:700 18px Inter,sans-serif;-webkit-text-stroke:0;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+@keyframes pop{0%{transform:translate(-50%,-50%) scale(.4);opacity:0}15%{transform:translate(-50%,-50%) scale(1.1);opacity:1}25%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-60%) scale(1)}}
+@media (prefers-reduced-motion: reduce){.sheet,.scrim{animation:none}}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<section id="v-home">
+  <div class="wrap">
+    <div class="hero">
+      <img src="icon-512.png" alt="" width="110" height="110" style="border-radius:26px">
+      <h1>Scorecard</h1>
+      <p>The free mini golf scorecard from Brooks Holt. Up to 6 players, works offline.</p>
+    </div>
+    <div class="stack">
+      <button class="resume hidden" id="resumeBtn"></button>
+      <button class="btn primary" id="newBtn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        New round</button>
+    </div>
+    <div class="sect">
+      <h2>Saved scorecards</h2>
+      <div class="list" id="histList"></div>
+    </div>
+    <div class="foot">
+      <a href="../courses/">Find a course Brooks has played</a> · <a href="../">brooksholt.com</a>
+      <div id="installHint" style="margin-top:10px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- SETUP -->
+<section id="v-setup" class="hidden">
+  <div class="top">
+    <button class="iconbtn" data-go="home" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="t"><b>New round</b></div>
+  </div>
+  <div class="wrap" style="padding-top:0">
+    <div class="field">
+      <span class="lab">Players</span>
+      <div id="plist"></div>
+      <button class="addp" id="addPlayer">+ Add player</button>
+    </div>
+    <div class="field">
+      <span class="lab">Holes</span>
+      <div class="seg" id="holesSeg">
+        <button data-h="9">9</button><button data-h="18">18</button><button data-h="36">36<small>2 courses</small></button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="lab">Course</span>
+      <div id="coursePicks"></div>
+    </div>
+    <div class="field">
+      <span class="lab">Par for each hole</span>
+      <div class="seg" id="parSeg">
+        <button data-p="2">Par 2</button><button data-p="3">Par 3</button><button data-p="0">No par</button>
+      </div>
+      <p class="hint">You can change the par for any hole on the scorecard.</p>
+    </div>
+    <div class="field">
+      <button class="btn primary" id="startBtn">Start round</button>
+    </div>
+  </div>
+</section>
+
+<!-- CARD -->
+<section id="v-card" class="hidden">
+  <div class="top" id="cardTop">
+    <button class="iconbtn" data-go="home" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="t"><b id="cardTitle"></b><span id="cardSub"></span></div>
+  </div>
+  <div class="cardwrap" style="max-width:560px;margin:0 auto">
+    <div id="watchLinks"></div>
+    <table class="card" id="cardTable"></table>
+    <div class="cardactions">
+      <button class="btn quiet" id="quitBtn">Delete this round</button>
+    </div>
+  </div>
+  <div class="dock"><div class="in">
+    <div class="tots" id="dockTots"></div>
+    <button class="btn gold" id="finishBtn">Finish round</button>
+  </div></div>
+</section>
+
+<!-- RESULTS -->
+<section id="v-results" class="hidden">
+  <div class="top">
+    <button class="iconbtn" data-go="home" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="t"><b id="resTitle">Results</b><span id="resSub"></span></div>
+  </div>
+  <div class="wrap" style="padding-top:0">
+    <div class="winner" id="winner"></div>
+    <div class="list stand" id="standings"></div>
+    <div class="stack" style="margin-top:18px">
+      <button class="btn primary" id="saveImgBtn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        Save scorecard image</button>
+      <button class="btn" id="editBtn">View or edit scorecard</button>
+      <button class="btn" id="againBtn">New round, same players</button>
+      <button class="btn quiet" id="delSavedBtn">Delete this scorecard</button>
+    </div>
+    <div class="preview hidden" id="preview"></div>
+  </div>
+</section>
+
+<canvas id="fx" class="hidden"></canvas>
+
+<script>
+(function () {
+'use strict';
+
+/* ---------- storage (localStorage; wrapped so private mode can't break the app) ---------- */
+var KEY = 'bh-scorecard-v1';
+var store = { current: null, history: [], lastPlayers: [] };
+try { var raw = localStorage.getItem(KEY); if (raw) store = Object.assign(store, JSON.parse(raw)); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+
+/* ---------- helpers ---------- */
+var $ = function (s, el) { return (el || document).querySelector(s); };
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+// Golf ball colors players can pick (tap the ball next to a name)
+var BALLS = [
+  { n: 'Green', c: '#2e9e4f' }, { n: 'Yellow', c: '#f7d21e' }, { n: 'Blue', c: '#1e7fe0' }, { n: 'Red', c: '#e0322b' },
+  { n: 'Purple', c: '#8e3fd1' }, { n: 'Orange', c: '#f5841f' }, { n: 'Pink', c: '#f0569a' }, { n: 'Teal', c: '#13b3b8' },
+  { n: 'White', c: '#f7f7f4' }, { n: 'Black', c: '#26292b' }
+];
+var COLORS = BALLS.slice(0, 6).map(function (b) { return b.c; });
+function pcolor(r, i) { return (r.players[i] && r.players[i].color) || COLORS[i % COLORS.length]; }
+function rememberedColor(name) { var m = store.ballColors || {}; return name ? m[name.trim().toLowerCase()] : null; }
+function freeColor(used) { var b = BALLS.filter(function (x) { return used.indexOf(x.c) < 0; })[0]; return b ? b.c : BALLS[0].c; }
+function fmtDate(iso) { var d = new Date(iso); return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
+function rel(n) { return n === 0 ? 'E' : (n > 0 ? '+' + n : '' + n); }
+function miles(aLat, aLng, bLat, bLng) {
+  var R = 3958.8, r = Math.PI / 180, dLat = (bLat - aLat) * r, dLng = (bLng - aLng) * r;
+  var x = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(aLat * r) * Math.cos(bLat * r) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+function fmtMi(m) { return m < 0.1 ? 'here' : (m < 10 ? m.toFixed(1) : Math.round(m)) + ' mi'; }
+function toast(msg, ms) {
+  var t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+  setTimeout(function () { t.remove(); }, ms || 2200);
+}
+function gc(name, title) {
+  try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: 'scorecard-' + name, title: title || name, event: true }); } catch (e) {}
+}
+var ICON_PLAY = '<svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="5" fill="#e62117"/><path d="M10 8.5v7l6-3.5z" fill="#fff"/></svg>';
+
+/* ---------- Brooks Holt course list (same data as brooksholt.com/courses) ---------- */
+var COURSES = null, coursesLoading = null;
+function loadCourses() {
+  if (COURSES) return Promise.resolve(COURSES);
+  if (coursesLoading) return coursesLoading;
+  coursesLoading = fetch('../data/courses.json').then(function (r) { return r.json(); }).then(function (list) {
+    COURSES = list.map(function (c) {
+      var groups = (c.groups || []).map(function (g) {
+        var v = (g.videos || []).slice().sort(function (a, b) { return a.d < b.d ? 1 : -1; })[0];
+        return { label: g.label ? String(g.label).replace(/\s+/g, ' ').trim() : null, vid: v ? v.id : null, vt: v ? v.t : null };
+      });
+      var latest = null;
+      (c.groups || []).forEach(function (g) { (g.videos || []).forEach(function (v) { if (!latest || v.d > latest.d) latest = v; }); });
+      var subs = groups.filter(function (g) { return g.label && !/^both|all courses|bowling|arcade/i.test(g.label); });
+      return { slug: c.slug, name: c.name, state: c.state, lat: c.lat, lng: c.lng, n: c.n,
+        closed: (c.tags || []).indexOf('Closed') >= 0, vid: latest ? latest.id : null, subs: subs,
+        key: (c.name + ' ' + (c.state || '')).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’']/g, '') };
+    });
+    return COURSES;
+  }).catch(function () { coursesLoading = null; return null; });
+  return coursesLoading;
+}
+loadCourses();
+
+/* ---------- views ---------- */
+var VIEWS = ['home', 'setup', 'card', 'results'];
+function show(v) {
+  VIEWS.forEach(function (n) { $('#v-' + n).classList.toggle('hidden', n !== v); });
+  window.scrollTo(0, 0);
+  if (v === 'home') renderHome();
+  wake(v === 'card');
+}
+document.addEventListener('click', function (e) {
+  var g = e.target.closest('[data-go]'); if (g) show(g.getAttribute('data-go'));
+});
+
+/* keep the screen on during a round (where supported) */
+var wakeLock = null;
+function wake(on) {
+  try {
+    if (on && 'wakeLock' in navigator && !wakeLock) navigator.wakeLock.request('screen').then(function (l) { wakeLock = l; l.addEventListener('release', function () { wakeLock = null; }); }).catch(function () {});
+    if (!on && wakeLock) { wakeLock.release(); wakeLock = null; }
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && !$('#v-card').classList.contains('hidden')) wake(true); });
+
+/* ---------- round math ---------- */
+function courseLabel(c) { return c ? c.name + (c.sub ? ' – ' + c.sub : '') : 'Mini golf'; }
+function roundTitle(r) {
+  var a = r.courses[0], b = r.courses[1];
+  if (r.courses.length > 1 && b && courseLabel(b) !== courseLabel(a)) {
+    if (a && a.name === b.name && a.sub && b.sub) return a.name + ' – ' + a.sub.replace(/\s*course$/i, '') + ' + ' + b.sub;
+    return courseLabel(a) + ' + ' + courseLabel(b);
+  }
+  return courseLabel(r.courses[0]);
+}
+function sections(r) {
+  if (r.holes === 36) return [{ c: 0, s: 0, e: 18 }, { c: 1, s: 18, e: 36 }];
+  return [{ c: 0, s: 0, e: r.holes }];
+}
+function secLabel(r, i) {
+  var a = r.courses[0], b = r.courses[1];
+  if (a && b && a.name === b.name && r.courses[i] && r.courses[i].sub) return r.courses[i].sub;
+  return courseLabel(r.courses[i]);
+}
+function holeNo(r, h) { return r.holes === 36 ? (h % 18) + 1 : h + 1; }
+function totals(r, p, s, e) {
+  s = s || 0; e = e == null ? r.holes : e;
+  var t = 0, par = 0, played = 0, aces = 0;
+  for (var h = s; h < e; h++) { var v = r.scores[p][h]; if (v) { t += v; played++; if (r.par[h]) par += r.par[h]; if (v === 1) aces++; } }
+  return { strokes: t, rel: t - par, played: played, aces: aces };
+}
+function hasPar(r) { return r.par.some(function (x) { return x > 0; }); }
+function parSum(r, s, e) { var t = 0; for (var h = s; h < e; h++) t += r.par[h] || 0; return t; }
+function standings(r) {
+  return r.players.map(function (pl, i) { var t = totals(r, i); return { i: i, name: pl.name, t: t }; })
+    .sort(function (a, b) { return (a.t.played === 0) - (b.t.played === 0) || a.t.strokes - b.t.strokes || b.t.aces - a.t.aces; });
+}
+
+/* ---------- HOME ---------- */
+function renderHome() {
+  var r = store.current, rb = $('#resumeBtn');
+  if (r) {
+    var filled = 0; r.scores.forEach(function (row) { row.forEach(function (v) { if (v) filled++; }); });
+    rb.innerHTML = '<small>Round in progress</small><b>' + esc(roundTitle(r)) + '</b><span>' + esc(r.players.map(function (p) { return p.name; }).join(', ')) + ' · ' + Math.ceil(filled / r.players.length) + ' of ' + r.holes + ' holes</span>';
+    rb.classList.remove('hidden');
+  } else rb.classList.add('hidden');
+  var hl = $('#histList');
+  if (!store.history.length) { hl.innerHTML = '<div class="empty">Finished rounds are saved here on this phone.</div>'; }
+  else hl.innerHTML = store.history.map(function (h) {
+    var st = standings(h)[0];
+    return '<button class="row" data-hist="' + h.id + '"><div class="m"><b>' + esc(roundTitle(h)) + '</b><span>' + fmtDate(h.started) + ' · ' + h.holes + ' holes · ' + esc(h.players.map(function (p) { return p.name; }).join(', ')) + '</span></div><div class="r">🏆 ' + esc(st.name) + '<br>' + st.t.strokes + '</div></button>';
+  }).join('');
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  var ih = $('#installHint');
+  if (standalone) ih.textContent = '';
+  else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) ih.innerHTML = 'Tip: tap <b>Share</b> → <b>Add to Home Screen</b> to keep this like an app.';
+  else ih.innerHTML = deferredInstall ? '<button class="btn" id="installBtn" style="min-height:44px;font-size:15px">Add to home screen</button>' : 'Tip: use your browser menu → <b>Add to Home screen</b> to keep this like an app.';
+}
+$('#resumeBtn').addEventListener('click', function () { renderCard(); show('card'); });
+$('#histList').addEventListener('click', function (e) {
+  var b = e.target.closest('[data-hist]'); if (!b) return;
+  var h = store.history.filter(function (x) { return x.id === b.getAttribute('data-hist'); })[0];
+  if (h) openResults(h);
+});
+var deferredInstall = null;
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredInstall = e; if (!$('#v-home').classList.contains('hidden')) renderHome(); });
+document.addEventListener('click', function (e) {
+  if (e.target.closest('#installBtn') && deferredInstall) { deferredInstall.prompt(); deferredInstall = null; gc('install', 'Add to home screen'); setTimeout(renderHome, 1500); }
+});
+
+/* ---------- SETUP ---------- */
+var setup = null;
+function newSetup(players, colors) {
+  var names = players || (store.lastPlayers.length ? store.lastPlayers.slice() : ['', '']);
+  setup = { players: names.map(function (n) { return n; }), colors: [], holes: 18, par: 2, courses: [null, null] };
+  names.forEach(function (n, i) { setup.colors[i] = (colors && colors[i]) || rememberedColor(n) || freeColor(setup.colors); });
+  if (store.lastSetup) { setup.holes = store.lastSetup.holes || 18; setup.par = store.lastSetup.par != null ? store.lastSetup.par : 2; }
+  renderSetup();
+  show('setup');
+}
+$('#newBtn').addEventListener('click', function () {
+  if (store.current && !confirm('You have a round in progress. Start a new one anyway? (The current round stays saved until you finish or delete it.)')) return;
+  newSetup();
+});
+function renderSetup() {
+  var pl = $('#plist');
+  pl.innerHTML = setup.players.map(function (n, i) {
+    return '<div class="pl"><button class="dot" data-ball="' + i + '" style="background-color:' + setup.colors[i] + '" aria-label="Change ball color for player ' + (i + 1) + '"></button><input data-pi="' + i + '" value="' + esc(n) + '" placeholder="Player ' + (i + 1) + '" maxlength="18" autocomplete="off" enterkeyhint="next">' +
+      (setup.players.length > 1 ? '<button data-rm="' + i + '" aria-label="Remove player">✕</button>' : '') + '</div>';
+  }).join('');
+  $('#addPlayer').classList.toggle('hidden', setup.players.length >= 6);
+  [].forEach.call($('#holesSeg').children, function (b) { b.classList.toggle('on', +b.dataset.h === setup.holes); });
+  [].forEach.call($('#parSeg').children, function (b) { b.classList.toggle('on', +b.dataset.p === setup.par); });
+  var cp = $('#coursePicks'), html = '';
+  var slots = setup.holes === 36 ? [0, 1] : [0];
+  slots.forEach(function (i) {
+    var c = setup.courses[i];
+    var head = setup.holes === 36 ? (i === 0 ? 'Holes 1–18' : 'Holes 19–36') : '';
+    if (i === 1 && !c) {
+      html += '<button class="pick none" data-cp="1"><div class="m"><span>' + head + '</span><b>Same course again (tap to change)</b></div>›</button>';
+    } else {
+      html += '<button class="pick' + (c ? '' : ' none') + '" data-cp="' + i + '"><div class="m">' + (head ? '<span>' + head + '</span>' : '') +
+        '<b>' + (c ? esc(courseLabel(c)) + (c.slug ? '<span class="badge">Brooks played</span>' : '') : 'Choose a course (optional)') + '</b>' +
+        (c && c.place ? '<span>' + esc(c.place) + '</span>' : '') + '</div>›</button>';
+    }
+  });
+  cp.innerHTML = html;
+}
+$('#plist').addEventListener('input', function (e) { var i = e.target.getAttribute('data-pi'); if (i != null) setup.players[+i] = e.target.value; });
+$('#plist').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') { var n = $('#plist [data-pi="' + (+e.target.getAttribute('data-pi') + 1) + '"]'); if (n) n.focus(); else e.target.blur(); }
+});
+$('#plist').addEventListener('click', function (e) {
+  var bb = e.target.closest('[data-ball]'); if (bb) { openBallPicker(+bb.getAttribute('data-ball')); return; }
+  var b = e.target.closest('[data-rm]'); if (!b) return;
+  var ri = +b.getAttribute('data-rm'); setup.players.splice(ri, 1); setup.colors.splice(ri, 1); renderSetup();
+});
+function openBallPicker(i) {
+  var scrim = document.createElement('div'); scrim.className = 'scrim';
+  var who = (setup.players[i] || '').trim() || 'Player ' + (i + 1);
+  scrim.innerHTML = '<div class="sheet" role="dialog" aria-label="Ball color"><div class="grab"></div>' +
+    '<div class="sh"><div class="t"><h3>Ball color</h3><p>' + esc(who) + '</p></div><button class="iconbtn" data-x aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
+    '<div class="balls">' + BALLS.map(function (b) { return '<button data-c="' + b.c + '" class="' + (setup.colors[i] === b.c ? 'on' : '') + '"><i style="background-color:' + b.c + '"></i>' + b.n + '</button>'; }).join('') + '</div></div>';
+  document.body.appendChild(scrim);
+  scrim.addEventListener('click', function (e) {
+    if (e.target === scrim || e.target.closest('[data-x]')) { scrim.remove(); return; }
+    var b = e.target.closest('[data-c]'); if (!b) return;
+    setup.colors[i] = b.getAttribute('data-c'); scrim.remove(); renderSetup();
+  });
+}
+$('#addPlayer').addEventListener('click', function () {
+  if (setup.players.length >= 6) return;
+  setup.players.push(''); setup.colors.push(freeColor(setup.colors)); renderSetup();
+  var ins = document.querySelectorAll('#plist input'); ins[ins.length - 1].focus();
+});
+$('#holesSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-h]'); if (b) { setup.holes = +b.dataset.h; renderSetup(); } });
+$('#parSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-p]'); if (b) { setup.par = +b.dataset.p; renderSetup(); } });
+$('#coursePicks').addEventListener('click', function (e) {
+  var b = e.target.closest('[data-cp]'); if (!b) return;
+  var slot = +b.getAttribute('data-cp');
+  openCoursePicker(slot, function (c) { setup.courses[slot] = c; renderSetup(); });
+});
+$('#startBtn').addEventListener('click', function () {
+  var names = setup.players.map(function (n, i) { return (n || '').trim() || 'Player ' + (i + 1); });
+  var c0 = setup.courses[0];
+  var courses = setup.holes === 36 ? [c0, setup.courses[1] || c0] : [c0];
+  var r = {
+    id: uid(), started: new Date().toISOString(), holes: setup.holes,
+    players: names.map(function (n, i) { return { name: n, color: setup.colors[i] }; }),
+    courses: courses, par: new Array(setup.holes).fill(setup.par || 0),
+    scores: names.map(function () { return new Array(setup.holes).fill(null); })
+  };
+  store.current = r;
+  store.lastPlayers = setup.players.map(function (n) { return (n || '').trim(); }).filter(Boolean);
+  store.ballColors = store.ballColors || {};
+  setup.players.forEach(function (n, i) { if ((n || '').trim()) store.ballColors[n.trim().toLowerCase()] = setup.colors[i]; });
+  store.lastSetup = { holes: setup.holes, par: setup.par };
+  save();
+  gc('start', setup.holes + ' holes, ' + names.length + ' players');
+  renderCard(); show('card');
+});
+
+/* ---------- COURSE PICKER ---------- */
+function openCoursePicker(slot, done) {
+  var scrim = document.createElement('div'); scrim.className = 'scrim';
+  scrim.innerHTML = '<div class="sheet tall" role="dialog" aria-label="Choose a course"><div class="grab"></div>' +
+    '<div class="sh"><div class="t"><h3>Choose a course</h3></div><button class="iconbtn" data-x aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
+    '<div class="search"><input type="search" placeholder="Search courses or type a name" autocomplete="off" enterkeyhint="search">' +
+    '<button class="near" data-near><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Near me</button></div>' +
+    '<div class="results"></div></div>';
+  document.body.appendChild(scrim);
+  var input = $('input', scrim), res = $('.results', scrim), nearData = null;
+  function close() { scrim.remove(); }
+  scrim.addEventListener('click', function (e) { if (e.target === scrim || e.target.closest('[data-x]')) close(); });
+
+  function brooksRow(c, extra) {
+    return '<button class="row" data-slug="' + esc(c.slug) + '"><div class="m"><b>' + esc(c.name) + '</b><span>' + esc(c.state || '') +
+      (c.closed ? ' · closed' : '') + ' · ' + c.n + ' video' + (c.n === 1 ? '' : 's') + '</span></div><div class="r">' + (extra || '') + '</div></button>';
+  }
+  function render() {
+    var q = input.value.trim(), html = '';
+    if (q) html += '<div class="list"><button class="row" data-custom><div class="m"><b>Use “' + esc(q) + '”</b><span>Any course, typed in</span></div></button></div>';
+    if (nearData) {
+      if (nearData.status) html += '<div class="status">' + nearData.status + '</div>';
+      if (nearData.brooks && nearData.brooks.length) {
+        html += '<div class="gh">Brooks has played these nearby</div><div class="list">' + nearData.brooks.map(function (x) { return brooksRow(x.c, fmtMi(x.d)); }).join('') + '</div>';
+      }
+      if (nearData.osm && nearData.osm.length) {
+        html += '<div class="gh">Other mini golf nearby</div><div class="list">' + nearData.osm.map(function (o, i) {
+          return '<button class="row" data-osm="' + i + '"><div class="m"><b>' + esc(o.name) + '</b><span>' + esc(o.place || 'Mini golf') + '</span></div><div class="r">' + fmtMi(o.d) + '</div></button>';
+        }).join('') + '</div>';
+      }
+      if (nearData.osmNote) html += '<div class="status">' + nearData.osmNote + '</div>';
+    }
+    if (!COURSES) html += '<div class="status">Loading Brooks Holt course list…</div>';
+    else if (q) {
+      var words = q.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’']/g, '').split(/\s+/);
+      var hits = COURSES.filter(function (c) { return words.every(function (w) { return c.key.indexOf(w) >= 0; }); }).slice(0, 40);
+      html += '<div class="gh">Courses Brooks has played</div>' + (hits.length ? '<div class="list">' + hits.map(function (c) { return brooksRow(c); }).join('') + '</div>' : '<div class="status">No match on Brooks’s list. Tap “Use” above, or try Near me.</div>');
+    } else if (!nearData) {
+      html += '<div class="status">Search ' + COURSES.length + ' courses Brooks has played, tap <b>Near me</b> to find mini golf around you, or just type any course name.</div>';
+    }
+    res.innerHTML = html;
+  }
+  input.addEventListener('input', render);
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter') input.blur(); });
+  loadCourses().then(render);
+  render();
+  setTimeout(function () { if (!('ontouchstart' in window)) input.focus(); }, 50);
+
+  function pickBrooks(c) {
+    var base = { name: c.name, slug: c.slug, vid: c.vid, place: c.state };
+    if (c.subs.length < 2) { close(); done(base); return; }
+    res.innerHTML = '<div class="gh">Which course at ' + esc(c.name) + '?</div><div class="list">' +
+      c.subs.map(function (g, i) { return '<button class="row" data-sub="' + i + '"><div class="m"><b>' + esc(g.label) + '</b></div></button>'; }).join('') +
+      '<button class="row" data-sub="-1"><div class="m"><b>Not sure / skip</b></div></button></div>';
+    res.onclick = function (e) {
+      var b = e.target.closest('[data-sub]'); if (!b) return;
+      var i = +b.getAttribute('data-sub');
+      if (i >= 0) { base.sub = c.subs[i].label; if (c.subs[i].vid) base.vid = c.subs[i].vid; }
+      close(); done(base);
+    };
+  }
+  res.addEventListener('click', function (e) {
+    if (res.onclick) return;
+    var b;
+    if ((b = e.target.closest('[data-custom]'))) { close(); done({ name: input.value.trim() }); return; }
+    if ((b = e.target.closest('[data-slug]'))) {
+      var c = COURSES.filter(function (x) { return x.slug === b.getAttribute('data-slug'); })[0]; if (c) pickBrooks(c); return;
+    }
+    if ((b = e.target.closest('[data-osm]'))) { var o = nearData.osm[+b.getAttribute('data-osm')]; close(); done({ name: o.name, place: o.place }); }
+  });
+
+  $('[data-near]', scrim).addEventListener('click', function () {
+    if (!navigator.geolocation) { nearData = { status: 'This browser can’t share your location.' }; render(); return; }
+    input.value = ''; nearData = { status: 'Finding your location…' }; render();
+    gc('near-me', 'Near me');
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      var lat = pos.coords.latitude, lng = pos.coords.longitude;
+      loadCourses().then(function () {
+        var brooks = (COURSES || []).map(function (c) { return { c: c, d: miles(lat, lng, c.lat, c.lng) }; })
+          .filter(function (x) { return x.d <= 40 && !x.c.closed; }).sort(function (a, b) { return a.d - b.d; }).slice(0, 15);
+        nearData = { brooks: brooks, status: null, osmNote: navigator.onLine === false ? 'You’re offline, so only Brooks’s courses are shown.' : 'Searching for other mini golf nearby…' };
+        render();
+        if (navigator.onLine === false) return;
+        findOsm(lat, lng).then(function (list) {
+          var out = list.filter(function (o) { return !brooks.some(function (x) { return miles(o.lat, o.lng, x.c.lat, x.c.lng) < 0.2; }); });
+          nearData.osm = out.slice(0, 30);
+          nearData.osmNote = out.length ? 'Nearby list from OpenStreetMap. Don’t see it? Type the name in the search box.' : (brooks.length ? 'No other mini golf found nearby. You can type any course name above.' : 'No mini golf found within 25 miles. You can type any course name above.');
+          render();
+        }).catch(function () { nearData.osmNote = 'Couldn’t load other nearby courses right now. You can type any course name above.'; render(); });
+      });
+    }, function () {
+      nearData = { status: 'Location is off. Allow location for this site, or search by name instead.' }; render();
+    }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 });
+  });
+}
+
+/* Other mini golf near you: OpenStreetMap (free, no key). Only the rough location is sent. */
+function findOsm(lat, lng) {
+  var la = lat.toFixed(3), lo = lng.toFixed(3);
+  var q = '[out:json][timeout:20];nwr["leisure"="miniature_golf"](around:40000,' + la + ',' + lo + ');out center tags 80;';
+  var hosts = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+  function tryHost(i) {
+    var ctl = 'AbortController' in window ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 15000);
+    return fetch(hosts[i], { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal: ctl ? ctl.signal : undefined })
+      .then(function (r) { clearTimeout(timer); if (!r.ok) throw new Error(r.status); return r.json(); })
+      .catch(function (e) { clearTimeout(timer); if (i + 1 < hosts.length) return tryHost(i + 1); throw e; });
+  }
+  return tryHost(0).then(function (j) {
+    var seen = {};
+    return (j.elements || []).map(function (el) {
+      var t = el.tags || {}, p = el.center || el;
+      var name = t.name || t.brand || (t.operator ? t.operator + ' mini golf' : null);
+      var place = [t['addr:street'] ? (t['addr:housenumber'] ? t['addr:housenumber'] + ' ' : '') + t['addr:street'] : null, t['addr:city']].filter(Boolean).join(', ');
+      return { name: name || 'Mini golf (no name listed)', named: !!name, place: place, lat: p.lat, lng: p.lon, d: miles(lat, lng, p.lat, p.lon) };
+    }).filter(function (o) {
+      if (o.lat == null) return false;
+      var k = o.name.toLowerCase() + Math.round(o.lat * 200) + Math.round(o.lng * 200);
+      if (seen[k]) return false; seen[k] = 1; return true;
+    }).sort(function (a, b) { return a.d - b.d; });
+  });
+}
+
+/* ---------- CARD ---------- */
+var R = null; // round being viewed on the card (current, or a saved one being edited)
+function renderCard(r) {
+  R = r || store.current;
+  $('#cardTitle').textContent = roundTitle(R);
+  $('#cardSub').textContent = fmtDate(R.started) + ' · ' + R.holes + ' holes';
+  var w = '';
+  var seen = {};
+  R.courses.forEach(function (c) {
+    if (c && c.vid && !seen[c.vid]) {
+      seen[c.vid] = 1;
+      w += '<a class="watch" href="https://www.youtube.com/watch?v=' + esc(c.vid) + '" target="_blank" rel="noopener" data-gcw>' + ICON_PLAY + 'Watch Brooks play ' + esc(R.courses.length > 1 && c.sub && R.courses[0].name === (R.courses[1] || {}).name ? 'the ' + c.sub : courseLabel(c)) + '</a>';
+    }
+  });
+  $('#watchLinks').innerHTML = w;
+  var n = R.players.length, parOn = hasPar(R);
+  var html = '<colgroup><col class="h">' + (parOn ? '<col class="p">' : '') + R.players.map(function () { return '<col>'; }).join('') + '</colgroup>';
+  html += '<thead><tr><th>Hole</th>' + (parOn ? '<th>Par</th>' : '') + R.players.map(function (p, i) {
+    return '<th><span class="nm">' + esc(p.name) + '</span><span class="bar" style="background:' + pcolor(R, i) + '"></span></th>';
+  }).join('') + '</tr></thead><tbody>';
+  var nextH = firstEmpty(R);
+  sections(R).forEach(function (sec, si) {
+    if (R.holes === 36) html += '<tr class="secth"><td colspan="' + (n + (parOn ? 2 : 1)) + '"><small>Course ' + (si + 1) + ' · holes ' + (sec.s + 1) + '–' + sec.e + '</small>' + esc(secLabel(R, sec.c)) + '</td></tr>';
+    for (var h = sec.s; h < sec.e; h++) {
+      html += '<tr data-row="' + h + '"><td class="hn">' + holeNo(R, h) + '</td>' + (parOn ? '<td class="par"><button data-par="' + h + '">' + (R.par[h] || '–') + '</button></td>' : '');
+      for (var p = 0; p < n; p++) {
+        var v = R.scores[p][h], cls = 'empty', par = R.par[h];
+        if (v) cls = v === 1 ? 'ace' : (par ? (v < par ? 'under' : (v >= par + 2 ? 'over2' : '')) : '');
+        if (!v && nextH && nextH.h === h && nextH.p === p) cls += ' next';
+        html += '<td class="sc"><button class="' + cls + '" data-p="' + p + '" data-h="' + h + '" aria-label="' + esc(R.players[p].name) + ' hole ' + holeNo(R, h) + '"><span>' + (v || '·') + '</span></button></td>';
+      }
+      html += '</tr>';
+      var len = sec.e - sec.s, k = h - sec.s + 1;
+      if (R.holes === 36 && k === 18) html += subRow('Course ' + (si + 1), sec.s, sec.e);
+    }
+  });
+  html += subRow('Total', 0, R.holes) + '</tbody>';
+  function subRow(label, s, e) {
+    return '<tr class="sub"><td class="lbl">' + label + '</td>' + (parOn ? '<td>' + (parSum(R, s, e) || '') + '</td>' : '') + R.players.map(function (pl, i) {
+      var t = totals(R, i, s, e); return '<td>' + (t.played ? t.strokes : '') + '</td>';
+    }).join('') + '</tr>';
+  }
+  $('#cardTable').innerHTML = html;
+  renderDock();
+  var top = $('#cardTop'); document.documentElement.style.setProperty('--toph', top.offsetHeight + 'px');
+  $('#finishBtn').textContent = R === store.current ? 'Finish round' : 'Save changes';
+  $('#quitBtn').classList.toggle('hidden', R !== store.current);
+}
+function firstEmpty(r) {
+  for (var h = 0; h < r.holes; h++) for (var p = 0; p < r.players.length; p++) if (!r.scores[p][h]) return { h: h, p: p };
+  return null;
+}
+function renderDock() {
+  var st = standings(R), leadScore = st[0] && st[0].t.played ? st[0].t.strokes : null, parOn = hasPar(R);
+  $('#dockTots').innerHTML = R.players.map(function (pl, i) {
+    var t = totals(R, i), lead = leadScore != null && t.played && t.strokes === leadScore && R.players.length > 1;
+    return '<div class="tot' + (lead ? ' lead' : '') + '"><div class="n">' + (lead ? '👑 ' : '') + esc(pl.name) + '</div><div class="s">' + t.strokes + '</div>' +
+      (parOn ? '<div class="r' + (t.rel < 0 ? ' u' : '') + '">' + (t.played ? rel(t.rel) : '–') + '</div>' : '<div class="r">' + t.played + ' holes</div>') + '</div>';
+  }).join('');
+}
+$('#cardTable').addEventListener('click', function (e) {
+  var b = e.target.closest('button'); if (!b) return;
+  if (b.hasAttribute('data-par')) openPar(+b.getAttribute('data-par'));
+  else if (b.hasAttribute('data-h')) openScore(+b.getAttribute('data-p'), +b.getAttribute('data-h'));
+});
+$('#watchLinks').addEventListener('click', function (e) { if (e.target.closest('[data-gcw]')) gc('watch-video', 'Watch Brooks play'); });
+function persist() {
+  if (R !== store.current) { var i = store.history.findIndex(function (x) { return x.id === R.id; }); if (i >= 0) store.history[i] = R; }
+  save();
+}
+
+/* score popup */
+var ICON_MINUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14"/></svg>';
+var ICON_PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+function openScore(p, h) {
+  var scrim = document.createElement('div'); scrim.className = 'scrim';
+  var sheet = document.createElement('div'); sheet.className = 'sheet'; sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', 'Enter score');
+  scrim.appendChild(sheet); document.body.appendChild(scrim);
+  var cur = { p: p, h: h, val: null };
+  function close() { scrim.remove(); renderCard(R); var row = $('#cardTable [data-row="' + Math.min(cur.h + 1, R.holes - 1) + '"]'); if (row) { var rect = row.getBoundingClientRect(); if (rect.bottom > window.innerHeight - 160 || rect.top < 80) window.scrollBy({ top: rect.top - window.innerHeight / 2, behavior: 'smooth' }); } }
+  function draw() {
+    var r = R, v = r.scores[cur.p][cur.h], par = r.par[cur.h];
+    if (cur.val == null) cur.val = v || par || 2;
+    var nums = '';
+    for (var i = 1; i <= 7; i++) nums += '<button data-n="' + i + '" class="' + (i === 1 ? 'ace ' : '') + (i === par ? 'isp ' : '') + (v === i ? 'cur' : '') + '">' + i + (i === 1 ? '<small>Ace!</small>' : (i === par ? '<small>Par</small>' : '')) + '</button>';
+    nums += '<button data-clear style="font-size:16px;font-family:Inter,sans-serif;font-weight:700;color:var(--muted)">Clear</button>';
+    sheet.innerHTML = '<div class="grab"></div>' +
+      '<div class="sh"><div class="t"><h3>' + esc(r.players[cur.p].name) + '</h3><p>Hole ' + holeNo(r, cur.h) + (r.holes === 36 ? ' · course ' + (cur.h < 18 ? 1 : 2) : '') + (par ? ' · Par ' + par : '') + '</p></div>' +
+      '<button class="iconbtn" data-x aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
+      (r.players.length > 1 ? '<div class="who">' + r.players.map(function (pl, i) { var s = r.scores[i][cur.h]; return '<button data-who="' + i + '" class="' + (i === cur.p ? 'on' : '') + '">' + esc(pl.name) + (s ? '<span class="v">' + s + '</span>' : '') + '</button>'; }).join('') + '</div>' : '') +
+      '<div class="nums">' + nums + '</div>' +
+      '<div class="stepper"><button data-dec aria-label="One less stroke">' + ICON_MINUS + '</button><div class="val">' + cur.val + '<small>strokes</small></div><button data-inc aria-label="One more stroke">' + ICON_PLUS + '</button></div>' +
+      '<div class="sheetbtns"><button class="btn" data-x>Close</button><button class="btn primary" data-ok>Save ' + cur.val + ' ›</button></div>';
+  }
+  function setScore(n) {
+    var was = R.scores[cur.p][cur.h];
+    R.scores[cur.p][cur.h] = n; persist();
+    if (n === 1 && was !== 1) celebrate(R.players[cur.p].name);
+    // move on: next player on this hole, then close and go to the next hole
+    if (cur.p + 1 < R.players.length) { cur.p++; cur.val = null; draw(); }
+    else close();
+  }
+  scrim.addEventListener('click', function (e) {
+    if (e.target === scrim || e.target.closest('[data-x]')) { close(); return; }
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.hasAttribute('data-n')) setScore(+b.getAttribute('data-n'));
+    else if (b.hasAttribute('data-ok')) setScore(cur.val);
+    else if (b.hasAttribute('data-dec')) { cur.val = Math.max(1, cur.val - 1); draw(); }
+    else if (b.hasAttribute('data-inc')) { cur.val = Math.min(20, cur.val + 1); draw(); }
+    else if (b.hasAttribute('data-clear')) { R.scores[cur.p][cur.h] = null; persist(); cur.val = null; draw(); }
+    else if (b.hasAttribute('data-who')) { cur.p = +b.getAttribute('data-who'); cur.val = null; draw(); }
+  });
+  draw();
+}
+
+/* par popup */
+function openPar(h) {
+  var scrim = document.createElement('div'); scrim.className = 'scrim';
+  var nums = '';
+  for (var i = 1; i <= 7; i++) nums += '<button data-n="' + i + '" class="' + (R.par[h] === i ? 'cur' : '') + '">' + i + '</button>';
+  var allSame = R.par.every(function (x) { return x === R.par[0]; });
+  scrim.innerHTML = '<div class="sheet" role="dialog" aria-label="Set par"><div class="grab"></div>' +
+    '<div class="sh"><div class="t"><h3>Par for hole ' + holeNo(R, h) + '</h3><p>Tap a number</p></div><button class="iconbtn" data-x aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
+    '<div class="nums">' + nums + '<button data-n="0" style="font-size:15px;font-family:Inter,sans-serif;font-weight:700;color:var(--muted)">No par</button></div>' +
+    '<label style="display:flex;gap:10px;align-items:center;margin-top:16px;font-weight:600"><input type="checkbox" data-all style="width:22px;height:22px"' + (allSame ? '' : '') + '> Use for all remaining holes</label></div>';
+  document.body.appendChild(scrim);
+  scrim.addEventListener('click', function (e) {
+    if (e.target === scrim || e.target.closest('[data-x]')) { scrim.remove(); return; }
+    var b = e.target.closest('[data-n]'); if (!b) return;
+    var n = +b.getAttribute('data-n'), all = $('[data-all]', scrim).checked;
+    for (var k = h; k < (all ? R.holes : h + 1); k++) R.par[k] = n;
+    persist(); scrim.remove(); renderCard(R);
+  });
+}
+
+$('#quitBtn').addEventListener('click', function () {
+  if (!confirm('Delete this round? The scores will be gone.')) return;
+  store.current = null; save(); show('home');
+});
+$('#finishBtn').addEventListener('click', function () {
+  if (R !== store.current) { persist(); openResults(R); return; }
+  var missing = 0; R.scores.forEach(function (row) { row.forEach(function (v) { if (!v) missing++; }); });
+  if (missing && !confirm(missing + ' score' + (missing === 1 ? ' is' : 's are') + ' still blank. Finish the round anyway?')) return;
+  R.finished = new Date().toISOString();
+  store.history.unshift(R); store.history = store.history.slice(0, 200);
+  store.current = null; save();
+  var w = standings(R)[0];
+  gc('finish', R.holes + ' holes');
+  openResults(R, true);
+});
+
+/* ---------- RESULTS ---------- */
+var shown = null;
+function openResults(r, fresh) {
+  shown = r;
+  $('#resTitle').textContent = roundTitle(r);
+  $('#resSub').textContent = fmtDate(r.started) + ' · ' + r.holes + ' holes';
+  var st = standings(r), parOn = hasPar(r);
+  var best = st[0].t.strokes, winners = st.filter(function (x) { return x.t.played && x.t.strokes === best; });
+  var aces = st.reduce(function (a, x) { return a + x.t.aces; }, 0);
+  var head;
+  if (r.players.length === 1) head = '<div class="trophy">⛳</div><h1>' + esc(st[0].name) + ' shot ' + best + '</h1>';
+  else if (winners.length > 1) head = '<div class="trophy">🤝</div><h1>It’s a tie!</h1><p>' + esc(winners.map(function (w) { return w.name; }).join(' & ')) + ' at ' + best + '</p>';
+  else head = '<div class="trophy">🏆</div><h1>' + esc(st[0].name) + ' wins!</h1><p>' + best + ' strokes' + (parOn ? ' (' + rel(st[0].t.rel) + ')' : '') + (st[1] ? ' · won by ' + (st[1].t.strokes - best) : '') + '</p>';
+  if (aces) head += '<p>⭐ ' + aces + ' hole' + (aces === 1 ? '' : 's') + ' in one this round</p>';
+  $('#winner').innerHTML = head;
+  var pos = 0, last = null;
+  $('#standings').innerHTML = st.map(function (x, i) {
+    if (x.t.strokes !== last) { pos = i + 1; last = x.t.strokes; }
+    var secs = r.holes === 36 ? ' · ' + sections(r).map(function (s) { return totals(r, x.i, s.s, s.e).strokes; }).join(' + ') : '';
+    return '<div class="row"><div class="pos">' + pos + '</div><div class="m"><b>' + esc(x.name) + '</b><span>' + (x.t.aces ? '⭐ ' + x.t.aces + ' ace' + (x.t.aces === 1 ? '' : 's') : 'No aces') + secs + '</span></div>' +
+      (parOn ? '<div class="rp' + (x.t.rel < 0 ? ' u' : '') + '">' + rel(x.t.rel) + '</div>' : '') + '<div class="sc">' + x.t.strokes + '</div></div>';
+  }).join('');
+  $('#preview').classList.add('hidden'); $('#preview').innerHTML = '';
+  show('results');
+  if (fresh && aces) setTimeout(function () { celebrate(null); }, 250);
+}
+$('#editBtn').addEventListener('click', function () { renderCard(shown); show('card'); });
+$('#againBtn').addEventListener('click', function () { newSetup(shown.players.map(function (p) { return p.name; }), shown.players.map(function (p, i) { return pcolor(shown, i); })); setup.holes = shown.holes; setup.courses = shown.courses.slice(); renderSetup(); });
+$('#delSavedBtn').addEventListener('click', function () {
+  if (!confirm('Delete this saved scorecard from this phone?')) return;
+  store.history = store.history.filter(function (x) { return x.id !== shown.id; }); save(); show('home');
+});
+$('#saveImgBtn').addEventListener('click', function () {
+  var btn = this; btn.disabled = true;
+  drawImage(shown).then(function (canvas) {
+    btn.disabled = false;
+    canvas.toBlob(function (blob) {
+      var fname = 'scorecard-' + roundTitle(shown).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) + '-' + shown.started.slice(0, 10) + '.png';
+      var url = URL.createObjectURL(blob);
+      $('#preview').innerHTML = '<img alt="Scorecard image" src="' + url + '">'; $('#preview').classList.remove('hidden');
+      gc('save-image', 'Save scorecard image');
+      var file = null; try { file = new File([blob], fname, { type: 'image/png' }); } catch (e) {}
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: 'Mini golf scorecard' }).catch(function () {});
+      } else {
+        var a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
+        toast('Scorecard image saved');
+      }
+    }, 'image/png');
+  }).catch(function () { btn.disabled = false; toast('Couldn’t make the image. Try again.'); });
+});
+
+/* scorecard image (always light, so it looks the same everywhere) */
+var logoImg = null;
+function getLogo() {
+  if (logoImg) return Promise.resolve(logoImg);
+  return new Promise(function (res) { var i = new Image(); i.onload = function () { logoImg = i; res(i); }; i.onerror = function () { res(null); }; i.src = '../logo.png'; });
+}
+function drawImage(r) {
+  return Promise.all([getLogo(), document.fonts ? document.fonts.ready : Promise.resolve()]).then(function (arr) {
+    var logo = arr[0], W = 1080, M = 48, n = r.players.length, parOn = hasPar(r);
+    var hw = 96, pw = parOn ? 90 : 0, cw = (W - 2 * M - hw - pw) / n, RH = 54, SH = 58;
+    var rows = [];
+    sections(r).forEach(function (sec, si) {
+      if (r.holes === 36) rows.push({ t: 'sec', label: 'Course ' + (si + 1) + ': ' + secLabel(r, sec.c) });
+      for (var h = sec.s; h < sec.e; h++) {
+        rows.push({ t: 'h', h: h });
+        var len = sec.e - sec.s, k = h - sec.s + 1;
+        if (r.holes === 36 && k === 18) rows.push({ t: 'sub', label: 'Course ' + (si + 1), s: sec.s, e: sec.e });
+      }
+    });
+    rows.push({ t: 'sub', label: 'Total', s: 0, e: r.holes, big: true });
+    var tableH = 64 + rows.reduce(function (a, x) { return a + (x.t === 'h' ? RH : x.t === 'sec' ? 70 : SH); }, 0);
+    var headH = 250, standH = 90 + n * 64, H = headH + tableH + standH + 110;
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    var g = cv.getContext('2d');
+    var F = '"Bricolage Grotesque", Inter, sans-serif', FI = 'Inter, system-ui, sans-serif';
+    g.fillStyle = '#f6f4ee'; g.fillRect(0, 0, W, H);
+    // header
+    g.fillStyle = '#1f7a4a'; g.fillRect(0, 0, W, headH);
+    if (logo) { var lh = 170, lw = lh * logo.width / logo.height; g.fillStyle = '#f6f4ee'; rr(g, M - 6, 34, lw + 12, lh + 12, 22); g.fill(); g.drawImage(logo, M, 40, lw, lh); }
+    var tx = logo ? M + 170 * logo.width / logo.height + 40 : M;
+    g.fillStyle = '#f2b705'; g.font = '700 26px ' + FI; g.fillText('MINI GOLF SCORECARD', tx, 82);
+    g.fillStyle = '#ffffff'; g.font = '800 50px ' + F;
+    wrapText(g, roundTitle(r), tx, 140, W - tx - M, 56, 2);
+    g.fillStyle = 'rgba(255,255,255,.85)'; g.font = '500 26px ' + FI;
+    g.fillText(fmtDate(r.started) + ' · ' + r.holes + ' holes · ' + n + ' player' + (n === 1 ? '' : 's'), tx, 222);
+    // table header
+    var y = headH + 24;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = '#5f6d65'; g.font = '700 22px ' + FI;
+    g.fillText('HOLE', M + hw / 2, y + 20); if (parOn) g.fillText('PAR', M + hw + pw / 2, y + 20);
+    r.players.forEach(function (pl, i) {
+      var cx = M + hw + pw + cw * i + cw / 2;
+      g.fillStyle = '#1b2a22'; g.font = '700 24px ' + FI; g.fillText(fit(g, pl.name, cw - 10), cx, y + 18);
+      g.fillStyle = pcolor(r, i); rr(g, cx - cw / 2 + 12, y + 38, cw - 24, 6, 3); g.fill(); g.strokeStyle = 'rgba(0,0,0,.2)'; g.lineWidth = 1; g.stroke();
+    });
+    y += 64;
+    rows.forEach(function (row) {
+      if (row.t === 'sec') {
+        g.textAlign = 'left'; g.fillStyle = '#1b2a22'; g.font = '800 30px ' + F; g.fillText(fit(g, row.label, W - 2 * M), M + 4, y + 40);
+        g.fillStyle = '#cfcbbf'; g.fillRect(M, y + 68, W - 2 * M, 2); g.textAlign = 'center'; y += 70; return;
+      }
+      var h = row.t === 'h' ? RH : SH;
+      if (row.t === 'sub') { g.fillStyle = row.big ? '#1f7a4a' : '#ffffff'; g.fillRect(M, y, W - 2 * M, h); }
+      else { g.fillStyle = '#e3e0d6'; g.fillRect(M, y + h - 1, W - 2 * M, 1); }
+      var cy = y + h / 2 + 1, light = row.big;
+      if (row.t === 'h') {
+        g.fillStyle = '#1b2a22'; g.font = '800 28px ' + F; g.fillText(holeNo(r, row.h), M + hw / 2, cy);
+        if (parOn) { g.fillStyle = '#5f6d65'; g.font = '600 24px ' + FI; g.fillText(r.par[row.h] || '–', M + hw + pw / 2, cy); }
+        r.players.forEach(function (pl, i) {
+          var v = r.scores[i][row.h], par = r.par[row.h], cx = M + hw + pw + cw * i + cw / 2;
+          if (!v) { g.fillStyle = '#cfcbbf'; g.font = '500 26px ' + FI; g.fillText('–', cx, cy); return; }
+          if (v === 1) { g.fillStyle = '#f2b705'; g.beginPath(); g.arc(cx, cy, 22, 0, 7); g.fill(); g.fillStyle = '#1b2a22'; }
+          else if (par && v < par) { g.fillStyle = '#e4f2ea'; rr(g, cx - 22, cy - 22, 44, 44, 10); g.fill(); g.fillStyle = '#1f7a4a'; }
+          else if (par && v >= par + 2) { g.fillStyle = '#fbe7e4'; rr(g, cx - 22, cy - 22, 44, 44, 10); g.fill(); g.fillStyle = '#c0392b'; }
+          else g.fillStyle = '#1b2a22';
+          g.font = '700 28px ' + FI; g.fillText(v, cx, cy);
+        });
+      } else {
+        g.fillStyle = light ? '#ffffff' : '#5f6d65'; g.font = '700 20px ' + FI; g.fillText(row.label.toUpperCase(), M + hw / 2, cy);
+        if (parOn) { g.font = '600 24px ' + FI; g.fillText(parSum(r, row.s, row.e) || '', M + hw + pw / 2, cy); }
+        r.players.forEach(function (pl, i) {
+          var t = totals(r, i, row.s, row.e), cx = M + hw + pw + cw * i + cw / 2;
+          g.fillStyle = light ? '#ffffff' : '#1b2a22'; g.font = '800 ' + (light ? 32 : 28) + 'px ' + F; g.fillText(t.played ? t.strokes : '', cx, cy);
+        });
+      }
+      y += h;
+    });
+    // standings
+    y += 36;
+    var st = standings(r), pos = 0, last = null;
+    g.textAlign = 'left'; g.fillStyle = '#1b2a22'; g.font = '800 34px ' + F; g.fillText('Final standings', M, y + 10); y += 44;
+    st.forEach(function (x, i) {
+      if (x.t.strokes !== last) { pos = i + 1; last = x.t.strokes; }
+      g.fillStyle = '#ffffff'; rr(g, M, y, W - 2 * M, 54, 14); g.fill();
+      g.fillStyle = pos === 1 ? '#f2b705' : '#e3e0d6'; g.beginPath(); g.arc(M + 32, y + 27, 17, 0, 7); g.fill();
+      g.fillStyle = '#1b2a22'; g.textAlign = 'center'; g.font = '800 20px ' + FI; g.fillText(pos, M + 32, y + 28);
+      g.textAlign = 'left'; g.font = '700 26px ' + FI; g.fillText((pos === 1 && n > 1 ? '🏆 ' : '') + x.name + (x.t.aces ? '   ⭐ ' + x.t.aces : ''), M + 64, y + 28);
+      g.textAlign = 'right'; g.font = '800 30px ' + F; g.fillText(x.t.strokes + (parOn ? '  (' + rel(x.t.rel) + ')' : ''), W - M - 20, y + 28);
+      g.textAlign = 'left'; y += 64;
+    });
+    // footer
+    g.textAlign = 'center'; g.fillStyle = '#1f7a4a'; g.font = '700 26px ' + FI;
+    g.fillText('Scored with the Brooks Holt Scorecard · brooksholt.com/scorecard', W / 2, H - 50);
+    return cv;
+  });
+  function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+  function fit(g, s, w) { s = String(s); if (g.measureText(s).width <= w) return s; while (s.length > 1 && g.measureText(s + '…').width > w) s = s.slice(0, -1); return s + '…'; }
+  function wrapText(g, text, x, y, w, lh, maxLines) {
+    var words = text.split(' '), line = '', lines = [];
+    words.forEach(function (wd) { var t = line ? line + ' ' + wd : wd; if (g.measureText(t).width > w && line) { lines.push(line); line = wd; } else line = t; });
+    lines.push(line);
+    if (lines.length > maxLines) { lines = lines.slice(0, maxLines); lines[maxLines - 1] = fit(g, lines[maxLines - 1] + '…', w); }
+    if (lines.length === 1) y += lh / 3;
+    lines.forEach(function (l, i) { g.fillText(l, x, y + i * lh - (lines.length - 1) * lh / 2 + 8); });
+  }
+}
+
+/* ---------- hole-in-one celebration: about 1.5 seconds, never blocks taps ---------- */
+function celebrate(name) {
+  if (name) {
+    var b = document.createElement('div'); b.className = 'acebanner';
+    b.innerHTML = 'HOLE IN ONE!<small>' + esc(name) + '</small>';
+    document.body.appendChild(b); setTimeout(function () { b.remove(); }, 1700);
+  }
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var cv = $('#fx'), g = cv.getContext('2d'), dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.classList.remove('hidden'); cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; g.scale(dpr, dpr);
+  var cols = ['#f2b705', '#1f7a4a', '#e62117', '#2f6fd6', '#ffffff', '#8a4fd1'], parts = [];
+  [[innerWidth * 0.25, innerHeight * 0.35], [innerWidth * 0.75, innerHeight * 0.3], [innerWidth * 0.5, innerHeight * 0.45]].forEach(function (o, k) {
+    for (var i = 0; i < 55; i++) {
+      var a = Math.random() * Math.PI * 2, s = 3 + Math.random() * 7;
+      parts.push({ x: o[0], y: o[1], vx: Math.cos(a) * s, vy: Math.sin(a) * s - 2, c: cols[(i + k) % cols.length], w: 5 + Math.random() * 6, h: 3 + Math.random() * 5, r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4, delay: k * 6 });
+    }
+  });
+  var t0 = performance.now(), DUR = 1500;
+  (function frame(now) {
+    var t = now - t0; g.clearRect(0, 0, innerWidth, innerHeight);
+    var fade = t > DUR - 400 ? Math.max(0, (DUR - t) / 400) : 1;
+    parts.forEach(function (p) {
+      if (p.delay > 0) { p.delay--; return; }
+      p.vy += 0.18; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      g.save(); g.globalAlpha = fade; g.translate(p.x, p.y); g.rotate(p.r); g.fillStyle = p.c; g.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); g.restore();
+    });
+    if (t < DUR) requestAnimationFrame(frame); else { g.clearRect(0, 0, innerWidth, innerHeight); cv.classList.add('hidden'); }
+  })(t0);
+  try { if (navigator.vibrate) navigator.vibrate([60, 40, 60]); } catch (e) {}
+}
+
+/* ---------- start ---------- */
+renderHome();
+if (store.current) { renderCard(); show('card'); }
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(function () {});
+})();
+</script>
+<script data-goatcounter="https://brooksholt.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

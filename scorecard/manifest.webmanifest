@@ -1,0 +1,14 @@
+{
+  "name": "Brooks Holt Mini Golf Scorecard",
+  "short_name": "Scorecard",
+  "description": "Free mini golf scorecard from Brooks Holt. Up to 6 players, 9, 18 or 36 holes, works offline.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f4ee",
+  "theme_color": "#1f7a4a",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
