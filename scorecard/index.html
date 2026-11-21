@@ -107,6 +107,16 @@ a{color:var(--green)}
 .balls button.on{color:var(--ink)}
 .card thead th .bar{box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
 .pl button{width:52px;flex:none;border-radius:14px;border:1px solid var(--line2);background:var(--panel);color:var(--muted)}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:0 -16px 10px;padding:2px 16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;align-items:center;gap:6px;height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line2);background:var(--panel);font-weight:600;font-size:15px;white-space:nowrap}
+.chip i{display:block;width:12px;height:12px;border-radius:50%;margin-left:-4px;border:1px solid rgba(0,0,0,.2)}
+.chip i+i{margin-left:-8px}
+.chip.edit{color:var(--muted);font-weight:500;border-style:dashed}
+.chip:active{transform:scale(.97)}
+.star{flex:none;display:grid;place-items:center;width:40px;height:40px;margin:-8px -6px -8px 0;border-radius:12px;font-size:22px;line-height:1;color:var(--line2)}
+.star.on{color:var(--accent)}
+.delbtn{flex:none;height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line2);color:#c0392b;font-weight:600;font-size:14px}
 .addp{height:48px;border-radius:14px;border:1.5px dashed var(--line2);width:100%;color:var(--green);font-weight:700}
 .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--line);border-radius:14px;padding:4px;gap:4px}
 .seg button{height:46px;border-radius:11px;font-weight:700;font-size:17px;color:var(--muted)}
@@ -250,6 +260,15 @@ table.card{width:100%;border-collapse:separate;border-spacing:0;table-layout:fix
       <h2>Saved scorecards</h2>
       <div class="list" id="histList"></div>
     </div>
+    <div class="sect">
+      <h2>Backup</h2>
+      <div class="stack" style="grid-template-columns:1fr 1fr">
+        <button class="btn" id="backupBtn">Back up</button>
+        <button class="btn" id="restoreBtn">Restore</button>
+      </div>
+      <input type="file" id="restoreFile" accept=".json,application/json" class="hidden">
+      <p class="hint">Saves your scorecards, groups, favorite courses and ball colors to a file. Keep it in Files, iCloud or email, and restore it on a new phone.</p>
+    </div>
     <div class="foot">
       <a href="../courses/">Find a course Brooks has played</a> · <a href="../">brooksholt.com</a>
       <div id="installHint" style="margin-top:10px"></div>
@@ -266,8 +285,10 @@ table.card{width:100%;border-collapse:separate;border-spacing:0;table-layout:fix
   <div class="wrap" style="padding-top:0">
     <div class="field">
       <span class="lab">Players</span>
+      <div class="chips hidden" id="groupChips"></div>
       <div id="plist"></div>
       <button class="addp" id="addPlayer">+ Add player</button>
+      <button class="btn quiet" id="saveGroup">Save these players as a group</button>
     </div>
     <div class="field">
       <span class="lab">Holes</span>
@@ -489,6 +510,50 @@ $('#histList').addEventListener('click', function (e) {
   var h = store.history.filter(function (x) { return x.id === b.getAttribute('data-hist'); })[0];
   if (h) openResults(h);
 });
+/* backup / restore: everything lives on this phone, so let people save it to a file */
+var BACKUP_KEYS = ['history', 'current', 'groups', 'favCourses', 'recentCourses', 'ballColors', 'lastPlayers', 'lastSetup'];
+$('#backupBtn').addEventListener('click', function () {
+  var data = {}; BACKUP_KEYS.forEach(function (k) { if (store[k] != null) data[k] = store[k]; });
+  var json = JSON.stringify({ app: 'brooksholt-scorecard', version: 1, saved: new Date().toISOString(), data: data });
+  var fname = 'brooks-holt-scorecard-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  var blob = new Blob([json], { type: 'application/json' }), file = null;
+  try { file = new File([blob], fname, { type: 'application/json' }); } catch (e) {}
+  gc('backup', 'Back up');
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: 'Scorecard backup' }).catch(function (e) { if (e && e.name !== 'AbortError') download(); });
+  } else download();
+  function download() {
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fname;
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+});
+$('#restoreBtn').addEventListener('click', function () { $('#restoreFile').value = ''; $('#restoreFile').click(); });
+$('#restoreFile').addEventListener('change', function (e) {
+  var f = e.target.files && e.target.files[0]; if (!f) return;
+  var rd = new FileReader();
+  rd.onload = function () {
+    var b; try { b = JSON.parse(rd.result); } catch (err) { b = null; }
+    if (!b || b.app !== 'brooksholt-scorecard' || !b.data) { alert('That file isn’t a Brooks Holt Scorecard backup.'); return; }
+    var d = b.data, ids = {}; store.history.forEach(function (h) { ids[h.id] = 1; });
+    var newRounds = (d.history || []).filter(function (h) { return h && h.id && !ids[h.id]; });
+    var gNames = {}; groups().forEach(function (g) { gNames[g.name.toLowerCase()] = 1; });
+    var newGroups = (d.groups || []).filter(function (g) { return g && g.name && !gNames[g.name.toLowerCase()]; });
+    var msg = 'Restore this backup from ' + fmtDate(b.saved || '') + '?\n\nAdds ' + newRounds.length + ' scorecard' + (newRounds.length === 1 ? '' : 's') + ' and ' + newGroups.length + ' group' + (newGroups.length === 1 ? '' : 's') + ', plus favorite courses and ball colors. Nothing on this phone gets deleted.';
+    if (!confirm(msg)) return;
+    store.history = store.history.concat(newRounds).sort(function (x, y) { return String(y.started).localeCompare(String(x.started)); }).slice(0, 200);
+    store.groups = groups().concat(newGroups).slice(0, 20);
+    function mergeCourses(a, c, max) { var seen = {}, out = []; (a || []).concat(c || []).forEach(function (x) { if (x && x.name && !seen[courseKey(x)]) { seen[courseKey(x)] = 1; out.push(x); } }); return out.slice(0, max); }
+    store.favCourses = mergeCourses(store.favCourses, d.favCourses, 30);
+    store.recentCourses = mergeCourses(store.recentCourses, d.recentCourses, 8);
+    store.ballColors = Object.assign({}, d.ballColors || {}, store.ballColors || {});
+    if (!store.current && d.current) store.current = d.current;
+    if (!(store.lastPlayers || []).length && d.lastPlayers) store.lastPlayers = d.lastPlayers;
+    if (!store.lastSetup && d.lastSetup) store.lastSetup = d.lastSetup;
+    save(); gc('restore', 'Restore'); renderHome();
+    alert('Backup restored.');
+  };
+  rd.readAsText(f);
+});
 var deferredInstall = null;
 window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredInstall = e; if (!$('#v-home').classList.contains('hidden')) renderHome(); });
 document.addEventListener('click', function (e) {
@@ -519,6 +584,7 @@ function renderSetup() {
   [].forEach.call($('#holesSeg').children, function (b) { b.classList.toggle('on', +b.dataset.h === setup.holes); });
   [].forEach.call($('#parSeg').children, function (b) { b.classList.toggle('on', +b.dataset.p === setup.par); });
   $('#cardName').value = setup.name || '';
+  renderGroups();
   var cp = $('#coursePicks'), html = '';
   var slots = setup.holes === 36 ? [0, 1] : [0];
   slots.forEach(function (i) {
@@ -533,6 +599,56 @@ function renderSetup() {
     }
   });
   cp.innerHTML = html;
+}
+/* saved player groups (kept on this phone) */
+function groups() { return store.groups || (store.groups = []); }
+function renderGroups() {
+  var g = groups(), el = $('#groupChips');
+  el.classList.toggle('hidden', !g.length);
+  el.innerHTML = g.map(function (x, i) {
+    return '<button class="chip" data-grp="' + i + '">' + x.players.map(function (p) { return '<i style="background:' + p.color + '"></i>'; }).join('') + esc(x.name) + '</button>';
+  }).join('') + (g.length ? '<button class="chip edit" data-grpedit>Edit</button>' : '');
+}
+$('#groupChips').addEventListener('click', function (e) {
+  var b = e.target.closest('[data-grp]');
+  if (b) {
+    var x = groups()[+b.getAttribute('data-grp')]; if (!x) return;
+    setup.players = x.players.map(function (p) { return p.name; });
+    setup.colors = x.players.map(function (p) { return p.color; });
+    renderSetup(); return;
+  }
+  if (e.target.closest('[data-grpedit]')) openGroupEditor();
+});
+$('#saveGroup').addEventListener('click', function () {
+  var players = setup.players.map(function (n, i) { return { name: (n || '').trim(), color: setup.colors[i] }; }).filter(function (p) { return p.name; });
+  if (!players.length) { alert('Type at least one player name first.'); return; }
+  var name = prompt('Name this group (like “Family”):', players.map(function (p) { return p.name; }).join(' & ').slice(0, 30));
+  if (name == null) return;
+  name = name.trim().slice(0, 30) || players.map(function (p) { return p.name; }).join(' & ').slice(0, 30);
+  var g = groups(), i = g.findIndex(function (x) { return x.name.toLowerCase() === name.toLowerCase(); });
+  if (i >= 0 && !confirm('Replace the saved group “' + g[i].name + '”?')) return;
+  var item = { name: name, players: players };
+  if (i >= 0) g[i] = item; else g.push(item);
+  store.groups = g.slice(0, 20); save(); renderGroups();
+});
+function openGroupEditor() {
+  var scrim = document.createElement('div'); scrim.className = 'scrim';
+  function draw() {
+    var g = groups();
+    if (!g.length) { scrim.remove(); renderGroups(); return; }
+    scrim.innerHTML = '<div class="sheet" role="dialog" aria-label="Saved groups"><div class="grab"></div>' +
+      '<div class="sh"><div class="t"><h3>Saved groups</h3><p>Tap a group on the setup screen to fill in the players</p></div><button class="iconbtn" data-x aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
+      '<div class="list" style="margin-top:12px">' + g.map(function (x, i) {
+        return '<div class="row"><div class="m"><b>' + esc(x.name) + '</b><span>' + esc(x.players.map(function (p) { return p.name; }).join(', ')) + '</span></div><button class="delbtn" data-del="' + i + '">Delete</button></div>';
+      }).join('') + '</div></div>';
+  }
+  draw(); document.body.appendChild(scrim);
+  scrim.addEventListener('click', function (e) {
+    if (e.target === scrim || e.target.closest('[data-x]')) { scrim.remove(); renderGroups(); return; }
+    var b = e.target.closest('[data-del]'); if (!b) return;
+    var x = groups()[+b.getAttribute('data-del')];
+    if (x && confirm('Delete the group “' + x.name + '”?')) { groups().splice(+b.getAttribute('data-del'), 1); save(); draw(); }
+  });
 }
 $('#cardName').addEventListener('input', function (e) { setup.name = e.target.value; });
 $('#cardName').addEventListener('keydown', function (e) { if (e.key === 'Enter') e.target.blur(); });
@@ -585,12 +701,26 @@ $('#startBtn').addEventListener('click', function () {
   store.ballColors = store.ballColors || {};
   setup.players.forEach(function (n, i) { if ((n || '').trim()) store.ballColors[n.trim().toLowerCase()] = setup.colors[i]; });
   store.lastSetup = { holes: setup.holes, par: setup.par };
+  courses.slice().reverse().forEach(function (c) { if (c) rememberCourse(c); });
   save();
   gc('start', setup.holes + ' holes, ' + names.length + ' players');
   renderCard(); show('card');
 });
 
 /* ---------- COURSE PICKER ---------- */
+/* favorite and recent courses (kept on this phone) */
+function courseKey(c) { return (courseLabel(c) + '|' + (c.place || '')).toLowerCase(); }
+function cleanCourse(c) { var o = { name: c.name }; ['slug', 'sub', 'vid', 'place'].forEach(function (k) { if (c[k]) o[k] = c[k]; }); return o; }
+function rememberCourse(c) {
+  var k = courseKey(c), r = (store.recentCourses || []).filter(function (x) { return courseKey(x) !== k; });
+  r.unshift(cleanCourse(c)); store.recentCourses = r.slice(0, 8);
+}
+function isFav(c) { var k = courseKey(c); return (store.favCourses || []).some(function (x) { return courseKey(x) === k; }); }
+function toggleFav(c) {
+  var k = courseKey(c), f = store.favCourses || [];
+  if (isFav(c)) f = f.filter(function (x) { return courseKey(x) !== k; }); else f.unshift(cleanCourse(c));
+  store.favCourses = f.slice(0, 30); save();
+}
 function openCoursePicker(slot, done) {
   var scrim = document.createElement('div'); scrim.className = 'scrim';
   scrim.innerHTML = '<div class="sheet tall" role="dialog" aria-label="Choose a course"><div class="grab"></div>' +
@@ -599,7 +729,7 @@ function openCoursePicker(slot, done) {
     '<button class="near" data-near><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Near me</button></div>' +
     '<div class="results"></div></div>';
   document.body.appendChild(scrim);
-  var input = $('input', scrim), res = $('.results', scrim), nearData = null;
+  var input = $('input', scrim), res = $('.results', scrim), nearData = null, saved = { f: [], r: [] };
   function close() { scrim.remove(); }
   scrim.addEventListener('click', function (e) { if (e.target === scrim || e.target.closest('[data-x]')) close(); });
 
@@ -628,6 +758,15 @@ function openCoursePicker(slot, done) {
       var hits = COURSES.filter(function (c) { return words.every(function (w) { return c.key.indexOf(w) >= 0; }); }).slice(0, 40);
       html += '<div class="gh">Courses Brooks has played</div>' + (hits.length ? '<div class="list">' + hits.map(function (c) { return brooksRow(c); }).join('') + '</div>' : '<div class="status">No match on Brooks’s list. Tap “Use” above, or try Near me.</div>');
     } else if (!nearData) {
+      var favs = store.favCourses || [], recent = (store.recentCourses || []).filter(function (c) { return !isFav(c); });
+      saved = { f: favs, r: recent };
+      function savedRow(c, kind, i) {
+        return '<button class="row" data-saved="' + kind + i + '"><div class="m"><b>' + esc(courseLabel(c)) + (c.slug ? '<span class="badge">Brooks played</span>' : '') + '</b>' + (c.place ? '<span>' + esc(c.place) + '</span>' : '') + '</div>' +
+          '<span class="star' + (kind === 'f' ? ' on' : '') + '" data-star="' + kind + i + '" role="button" aria-label="' + (kind === 'f' ? 'Remove from favorites' : 'Add to favorites') + '">' + (kind === 'f' ? '★' : '☆') + '</span></button>';
+      }
+      if (favs.length) html += '<div class="gh">Favorites</div><div class="list">' + favs.map(function (c, i) { return savedRow(c, 'f', i); }).join('') + '</div>';
+      if (recent.length) html += '<div class="gh">Recent</div><div class="list">' + recent.map(function (c, i) { return savedRow(c, 'r', i); }).join('') + '</div>';
+      if (recent.length && !favs.length) html += '<div class="status" style="padding-top:8px">Tap ☆ to keep a course in Favorites.</div>';
       html += '<div class="status">Search ' + COURSES.length + ' courses Brooks has played, tap <b>Near me</b> to find mini golf around you, or just type any course name.</div>';
     }
     res.innerHTML = html;
@@ -654,6 +793,12 @@ function openCoursePicker(slot, done) {
   res.addEventListener('click', function (e) {
     if (res.onclick) return;
     var b;
+    if ((b = e.target.closest('[data-star]'))) {
+      var sk = b.getAttribute('data-star'), sc = saved[sk[0]][+sk.slice(1)]; if (sc) { toggleFav(sc); render(); } return;
+    }
+    if ((b = e.target.closest('[data-saved]'))) {
+      var vk = b.getAttribute('data-saved'), vc = saved[vk[0]][+vk.slice(1)]; if (vc) { close(); done(cleanCourse(vc)); } return;
+    }
     if ((b = e.target.closest('[data-custom]'))) { close(); done({ name: input.value.trim() }); return; }
     if ((b = e.target.closest('[data-slug]'))) {
       var c = COURSES.filter(function (x) { return x.slug === b.getAttribute('data-slug'); })[0]; if (c) pickBrooks(c); return;

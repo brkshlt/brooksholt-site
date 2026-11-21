@@ -1,6 +1,6 @@
 // Offline support for brooksholt.com/scorecard.
 // Bump VERSION whenever index.html changes so phones pick up the new copy.
-var VERSION = 'scorecard-v3';
+var VERSION = 'scorecard-v4';
 var CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', '../logo.png', '../data/courses.json'];
 
 self.addEventListener('install', function (e) {
