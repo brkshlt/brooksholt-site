@@ -94,6 +94,8 @@ a{color:var(--green)}
 .pl{display:flex;gap:8px;margin-bottom:8px}
 .pl input{flex:1;min-width:0;height:52px;border-radius:14px;border:1px solid var(--line2);background:var(--panel);padding:0 14px;font-size:17px}
 .pl input:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:transparent}
+.txt{display:block;width:100%;height:52px;border-radius:14px;border:1px solid var(--line2);background:var(--panel);padding:0 14px;font-size:17px;color:inherit}
+.txt:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:transparent}
 .pl .dot{width:40px;height:40px;flex:none;align-self:center;border-radius:50%;border:1px solid rgba(0,0,0,.25);position:relative;
   background-image:radial-gradient(circle at 32% 30%,rgba(255,255,255,.85) 0 12%,rgba(255,255,255,0) 45%),radial-gradient(circle at 70% 75%,rgba(0,0,0,.18),rgba(0,0,0,0) 60%)}
 .pl .dot::after{content:"";position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;border-radius:50%;background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6d65' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") center/11px no-repeat;border:1px solid var(--line2)}
@@ -191,7 +193,7 @@ table.card{width:100%;border-collapse:separate;border-spacing:0;table-layout:fix
 .stepper button svg{width:30px;height:30px}
 .stepper .val{text-align:center;font:800 46px "Bricolage Grotesque",sans-serif;line-height:1}
 .stepper .val small{display:block;font:600 13px Inter,sans-serif;color:var(--muted);margin-top:2px}
-.sheetbtns{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:14px}
+.sheetbtns{display:grid;grid-template-columns:1fr 1fr 2fr;gap:10px;margin-top:14px}
 
 /* course picker */
 .search{display:flex;gap:8px;margin-top:12px;flex:none}
@@ -276,6 +278,11 @@ table.card{width:100%;border-collapse:separate;border-spacing:0;table-layout:fix
     <div class="field">
       <span class="lab">Course</span>
       <div id="coursePicks"></div>
+    </div>
+    <div class="field">
+      <label class="lab" for="cardName">Scorecard name</label>
+      <input class="txt" id="cardName" maxlength="40" placeholder="Optional, like “Beach Trip 2026”" autocomplete="off" enterkeyhint="done">
+      <p class="hint">Shows at the top of the scorecard, along with the course if you picked one.</p>
     </div>
     <div class="field">
       <span class="lab">Par for each hole</span>
@@ -429,6 +436,10 @@ function roundTitle(r) {
   }
   return courseLabel(r.courses[0]);
 }
+function cardName(r) { return String(r.name || '').trim(); }
+function hasCourse(r) { return r.courses.some(Boolean); }
+function mainTitle(r) { return cardName(r) || roundTitle(r); }   // custom name if given, else the course
+function courseLine(r) { return cardName(r) && hasCourse(r) ? roundTitle(r) : ''; } // course shown under a custom name
 function sections(r) {
   if (r.holes === 36) return [{ c: 0, s: 0, e: 18 }, { c: 1, s: 18, e: 36 }];
   return [{ c: 0, s: 0, e: r.holes }];
@@ -442,7 +453,7 @@ function holeNo(r, h) { return r.holes === 36 ? (h % 18) + 1 : h + 1; }
 function totals(r, p, s, e) {
   s = s || 0; e = e == null ? r.holes : e;
   var t = 0, par = 0, played = 0, aces = 0;
-  for (var h = s; h < e; h++) { var v = r.scores[p][h]; if (v) { t += v; played++; if (r.par[h]) par += r.par[h]; if (v === 1) aces++; } }
+  for (var h = s; h < e; h++) { var v = r.scores[p][h]; if (v != null) { t += v; played++; if (r.par[h]) par += r.par[h]; if (v === 1) aces++; } }
   return { strokes: t, rel: t - par, played: played, aces: aces };
 }
 function hasPar(r) { return r.par.some(function (x) { return x > 0; }); }
@@ -456,15 +467,15 @@ function standings(r) {
 function renderHome() {
   var r = store.current, rb = $('#resumeBtn');
   if (r) {
-    var filled = 0; r.scores.forEach(function (row) { row.forEach(function (v) { if (v) filled++; }); });
-    rb.innerHTML = '<small>Round in progress</small><b>' + esc(roundTitle(r)) + '</b><span>' + esc(r.players.map(function (p) { return p.name; }).join(', ')) + ' · ' + Math.ceil(filled / r.players.length) + ' of ' + r.holes + ' holes</span>';
+    var filled = 0; r.scores.forEach(function (row) { row.forEach(function (v) { if (v != null) filled++; }); });
+    rb.innerHTML = '<small>Round in progress</small><b>' + esc(mainTitle(r)) + '</b><span>' + esc((courseLine(r) ? courseLine(r) + ' · ' : '') + r.players.map(function (p) { return p.name; }).join(', ')) + ' · ' + Math.ceil(filled / r.players.length) + ' of ' + r.holes + ' holes</span>';
     rb.classList.remove('hidden');
   } else rb.classList.add('hidden');
   var hl = $('#histList');
   if (!store.history.length) { hl.innerHTML = '<div class="empty">Finished rounds are saved here on this phone.</div>'; }
   else hl.innerHTML = store.history.map(function (h) {
     var st = standings(h)[0];
-    return '<button class="row" data-hist="' + h.id + '"><div class="m"><b>' + esc(roundTitle(h)) + '</b><span>' + fmtDate(h.started) + ' · ' + h.holes + ' holes · ' + esc(h.players.map(function (p) { return p.name; }).join(', ')) + '</span></div><div class="r">🏆 ' + esc(st.name) + '<br>' + st.t.strokes + '</div></button>';
+    return '<button class="row" data-hist="' + h.id + '"><div class="m"><b>' + esc(mainTitle(h)) + '</b><span>' + esc(courseLine(h) ? courseLine(h) + ' · ' : '') + fmtDate(h.started) + ' · ' + h.holes + ' holes · ' + esc(h.players.map(function (p) { return p.name; }).join(', ')) + '</span></div><div class="r">🏆 ' + esc(st.name) + '<br>' + st.t.strokes + '</div></button>';
   }).join('');
   var standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   var ih = $('#installHint');
@@ -488,7 +499,7 @@ document.addEventListener('click', function (e) {
 var setup = null;
 function newSetup(players, colors) {
   var names = players || (store.lastPlayers.length ? store.lastPlayers.slice() : ['', '']);
-  setup = { players: names.map(function (n) { return n; }), colors: [], holes: 18, par: 2, courses: [null, null] };
+  setup = { players: names.map(function (n) { return n; }), colors: [], holes: 18, par: 2, courses: [null, null], name: '' };
   names.forEach(function (n, i) { setup.colors[i] = (colors && colors[i]) || rememberedColor(n) || freeColor(setup.colors); });
   if (store.lastSetup) { setup.holes = store.lastSetup.holes || 18; setup.par = store.lastSetup.par != null ? store.lastSetup.par : 2; }
   renderSetup();
@@ -507,6 +518,7 @@ function renderSetup() {
   $('#addPlayer').classList.toggle('hidden', setup.players.length >= 6);
   [].forEach.call($('#holesSeg').children, function (b) { b.classList.toggle('on', +b.dataset.h === setup.holes); });
   [].forEach.call($('#parSeg').children, function (b) { b.classList.toggle('on', +b.dataset.p === setup.par); });
+  $('#cardName').value = setup.name || '';
   var cp = $('#coursePicks'), html = '';
   var slots = setup.holes === 36 ? [0, 1] : [0];
   slots.forEach(function (i) {
@@ -522,6 +534,8 @@ function renderSetup() {
   });
   cp.innerHTML = html;
 }
+$('#cardName').addEventListener('input', function (e) { setup.name = e.target.value; });
+$('#cardName').addEventListener('keydown', function (e) { if (e.key === 'Enter') e.target.blur(); });
 $('#plist').addEventListener('input', function (e) { var i = e.target.getAttribute('data-pi'); if (i != null) setup.players[+i] = e.target.value; });
 $('#plist').addEventListener('keydown', function (e) {
   if (e.key === 'Enter') { var n = $('#plist [data-pi="' + (+e.target.getAttribute('data-pi') + 1) + '"]'); if (n) n.focus(); else e.target.blur(); }
@@ -561,7 +575,7 @@ $('#startBtn').addEventListener('click', function () {
   var c0 = setup.courses[0];
   var courses = setup.holes === 36 ? [c0, setup.courses[1] || c0] : [c0];
   var r = {
-    id: uid(), started: new Date().toISOString(), holes: setup.holes,
+    id: uid(), started: new Date().toISOString(), holes: setup.holes, name: (setup.name || '').trim(),
     players: names.map(function (n, i) { return { name: n, color: setup.colors[i] }; }),
     courses: courses, par: new Array(setup.holes).fill(setup.par || 0),
     scores: names.map(function () { return new Array(setup.holes).fill(null); })
@@ -703,8 +717,8 @@ function findOsm(lat, lng) {
 var R = null; // round being viewed on the card (current, or a saved one being edited)
 function renderCard(r) {
   R = r || store.current;
-  $('#cardTitle').textContent = roundTitle(R);
-  $('#cardSub').textContent = fmtDate(R.started) + ' · ' + R.holes + ' holes';
+  $('#cardTitle').textContent = mainTitle(R);
+  $('#cardSub').textContent = (courseLine(R) ? courseLine(R) + ' · ' : '') + fmtDate(R.started) + ' · ' + R.holes + ' holes';
   var w = '';
   var seen = {};
   R.courses.forEach(function (c) {
@@ -726,9 +740,9 @@ function renderCard(r) {
       html += '<tr data-row="' + h + '"><td class="hn">' + holeNo(R, h) + '</td>' + (parOn ? '<td class="par"><button data-par="' + h + '">' + (R.par[h] || '–') + '</button></td>' : '');
       for (var p = 0; p < n; p++) {
         var v = R.scores[p][h], cls = 'empty', par = R.par[h];
-        if (v) cls = v === 1 ? 'ace' : (par ? (v < par ? 'under' : (v >= par + 2 ? 'over2' : '')) : '');
-        if (!v && nextH && nextH.h === h && nextH.p === p) cls += ' next';
-        html += '<td class="sc"><button class="' + cls + '" data-p="' + p + '" data-h="' + h + '" aria-label="' + esc(R.players[p].name) + ' hole ' + holeNo(R, h) + '"><span>' + (v || '·') + '</span></button></td>';
+        if (v != null) cls = v === 1 ? 'ace' : (par ? (v < par ? 'under' : (v >= par + 2 ? 'over2' : '')) : '');
+        if (v == null && nextH && nextH.h === h && nextH.p === p) cls += ' next';
+        html += '<td class="sc"><button class="' + cls + '" data-p="' + p + '" data-h="' + h + '" aria-label="' + esc(R.players[p].name) + ' hole ' + holeNo(R, h) + '"><span>' + (v != null ? v : '·') + '</span></button></td>';
       }
       html += '</tr>';
       var len = sec.e - sec.s, k = h - sec.s + 1;
@@ -748,7 +762,7 @@ function renderCard(r) {
   $('#quitBtn').classList.toggle('hidden', R !== store.current);
 }
 function firstEmpty(r) {
-  for (var h = 0; h < r.holes; h++) for (var p = 0; p < r.players.length; p++) if (!r.scores[p][h]) return { h: h, p: p };
+  for (var h = 0; h < r.holes; h++) for (var p = 0; p < r.players.length; p++) if (r.scores[p][h] == null) return { h: h, p: p };
   return null;
 }
 function renderDock() {
@@ -781,17 +795,16 @@ function openScore(p, h) {
   function close() { scrim.remove(); renderCard(R); var row = $('#cardTable [data-row="' + Math.min(cur.h + 1, R.holes - 1) + '"]'); if (row) { var rect = row.getBoundingClientRect(); if (rect.bottom > window.innerHeight - 160 || rect.top < 80) window.scrollBy({ top: rect.top - window.innerHeight / 2, behavior: 'smooth' }); } }
   function draw() {
     var r = R, v = r.scores[cur.p][cur.h], par = r.par[cur.h];
-    if (cur.val == null) cur.val = v || par || 2;
+    if (cur.val == null) cur.val = v != null ? v : (par || 2);
     var nums = '';
-    for (var i = 1; i <= 7; i++) nums += '<button data-n="' + i + '" class="' + (i === 1 ? 'ace ' : '') + (i === par ? 'isp ' : '') + (v === i ? 'cur' : '') + '">' + i + (i === 1 ? '<small>Ace!</small>' : (i === par ? '<small>Par</small>' : '')) + '</button>';
-    nums += '<button data-clear style="font-size:16px;font-family:Inter,sans-serif;font-weight:700;color:var(--muted)">Clear</button>';
+    for (var i = 0; i <= 7; i++) nums += '<button data-n="' + i + '" class="' + (i === 1 ? 'ace ' : '') + (i === par ? 'isp ' : '') + (v === i ? 'cur' : '') + '">' + i + (i === 1 ? '<small>Ace!</small>' : (i === par ? '<small>Par</small>' : '')) + '</button>';
     sheet.innerHTML = '<div class="grab"></div>' +
       '<div class="sh"><div class="t"><h3>' + esc(r.players[cur.p].name) + '</h3><p>Hole ' + holeNo(r, cur.h) + (r.holes === 36 ? ' · course ' + (cur.h < 18 ? 1 : 2) : '') + (par ? ' · Par ' + par : '') + '</p></div>' +
       '<button class="iconbtn" data-x aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
-      (r.players.length > 1 ? '<div class="who">' + r.players.map(function (pl, i) { var s = r.scores[i][cur.h]; return '<button data-who="' + i + '" class="' + (i === cur.p ? 'on' : '') + '">' + esc(pl.name) + (s ? '<span class="v">' + s + '</span>' : '') + '</button>'; }).join('') + '</div>' : '') +
+      (r.players.length > 1 ? '<div class="who">' + r.players.map(function (pl, i) { var s = r.scores[i][cur.h]; return '<button data-who="' + i + '" class="' + (i === cur.p ? 'on' : '') + '">' + esc(pl.name) + (s != null ? '<span class="v">' + s + '</span>' : '') + '</button>'; }).join('') + '</div>' : '') +
       '<div class="nums">' + nums + '</div>' +
       '<div class="stepper"><button data-dec aria-label="One less stroke">' + ICON_MINUS + '</button><div class="val">' + cur.val + '<small>strokes</small></div><button data-inc aria-label="One more stroke">' + ICON_PLUS + '</button></div>' +
-      '<div class="sheetbtns"><button class="btn" data-x>Close</button><button class="btn primary" data-ok>Save ' + cur.val + ' ›</button></div>';
+      '<div class="sheetbtns"><button class="btn" data-clear>Clear</button><button class="btn" data-x>Close</button><button class="btn primary" data-ok>Save ' + cur.val + ' ›</button></div>';
   }
   function setScore(n) {
     var was = R.scores[cur.p][cur.h];
@@ -806,7 +819,7 @@ function openScore(p, h) {
     var b = e.target.closest('button'); if (!b) return;
     if (b.hasAttribute('data-n')) setScore(+b.getAttribute('data-n'));
     else if (b.hasAttribute('data-ok')) setScore(cur.val);
-    else if (b.hasAttribute('data-dec')) { cur.val = Math.max(1, cur.val - 1); draw(); }
+    else if (b.hasAttribute('data-dec')) { cur.val = Math.max(0, cur.val - 1); draw(); }
     else if (b.hasAttribute('data-inc')) { cur.val = Math.min(20, cur.val + 1); draw(); }
     else if (b.hasAttribute('data-clear')) { R.scores[cur.p][cur.h] = null; persist(); cur.val = null; draw(); }
     else if (b.hasAttribute('data-who')) { cur.p = +b.getAttribute('data-who'); cur.val = null; draw(); }
@@ -840,7 +853,7 @@ $('#quitBtn').addEventListener('click', function () {
 });
 $('#finishBtn').addEventListener('click', function () {
   if (R !== store.current) { persist(); openResults(R); return; }
-  var missing = 0; R.scores.forEach(function (row) { row.forEach(function (v) { if (!v) missing++; }); });
+  var missing = 0; R.scores.forEach(function (row) { row.forEach(function (v) { if (v == null) missing++; }); });
   if (missing && !confirm(missing + ' score' + (missing === 1 ? ' is' : 's are') + ' still blank. Finish the round anyway?')) return;
   R.finished = new Date().toISOString();
   store.history.unshift(R); store.history = store.history.slice(0, 200);
@@ -854,8 +867,8 @@ $('#finishBtn').addEventListener('click', function () {
 var shown = null;
 function openResults(r, fresh) {
   shown = r;
-  $('#resTitle').textContent = roundTitle(r);
-  $('#resSub').textContent = fmtDate(r.started) + ' · ' + r.holes + ' holes';
+  $('#resTitle').textContent = mainTitle(r);
+  $('#resSub').textContent = (courseLine(r) ? courseLine(r) + ' · ' : '') + fmtDate(r.started) + ' · ' + r.holes + ' holes';
   var st = standings(r), parOn = hasPar(r);
   var best = st[0].t.strokes, winners = st.filter(function (x) { return x.t.played && x.t.strokes === best; });
   var aces = st.reduce(function (a, x) { return a + x.t.aces; }, 0);
@@ -887,7 +900,7 @@ $('#saveImgBtn').addEventListener('click', function () {
   drawImage(shown).then(function (canvas) {
     btn.disabled = false;
     canvas.toBlob(function (blob) {
-      var fname = 'scorecard-' + roundTitle(shown).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) + '-' + shown.started.slice(0, 10) + '.png';
+      var fname = 'scorecard-' + mainTitle(shown).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) + '-' + shown.started.slice(0, 10) + '.png';
       var url = URL.createObjectURL(blob);
       $('#preview').innerHTML = '<img alt="Scorecard image" src="' + url + '">'; $('#preview').classList.remove('hidden');
       gc('save-image', 'Save scorecard image');
@@ -934,7 +947,10 @@ function drawImage(r) {
     var tx = logo ? M + 170 * logo.width / logo.height + 40 : M;
     g.fillStyle = '#f2b705'; g.font = '700 26px ' + FI; g.fillText('MINI GOLF SCORECARD', tx, 82);
     g.fillStyle = '#ffffff'; g.font = '800 50px ' + F;
-    wrapText(g, roundTitle(r), tx, 140, W - tx - M, 56, 2);
+    if (courseLine(r)) {
+      wrapText(g, mainTitle(r), tx, 118, W - tx - M, 56, 1);
+      g.fillStyle = '#f6f4ee'; g.font = '600 30px ' + FI; g.fillText(fit(g, courseLine(r), W - tx - M), tx, 182);
+    } else wrapText(g, mainTitle(r), tx, 140, W - tx - M, 56, 2);
     g.fillStyle = 'rgba(255,255,255,.85)'; g.font = '500 26px ' + FI;
     g.fillText(fmtDate(r.started) + ' · ' + r.holes + ' holes · ' + n + ' player' + (n === 1 ? '' : 's'), tx, 222);
     // table header
@@ -962,7 +978,7 @@ function drawImage(r) {
         if (parOn) { g.fillStyle = '#5f6d65'; g.font = '600 24px ' + FI; g.fillText(r.par[row.h] || '–', M + hw + pw / 2, cy); }
         r.players.forEach(function (pl, i) {
           var v = r.scores[i][row.h], par = r.par[row.h], cx = M + hw + pw + cw * i + cw / 2;
-          if (!v) { g.fillStyle = '#cfcbbf'; g.font = '500 26px ' + FI; g.fillText('–', cx, cy); return; }
+          if (v == null) { g.fillStyle = '#cfcbbf'; g.font = '500 26px ' + FI; g.fillText('–', cx, cy); return; }
           if (v === 1) { g.fillStyle = '#f2b705'; g.beginPath(); g.arc(cx, cy, 22, 0, 7); g.fill(); g.fillStyle = '#1b2a22'; }
           else if (par && v < par) { g.fillStyle = '#e4f2ea'; rr(g, cx - 22, cy - 22, 44, 44, 10); g.fill(); g.fillStyle = '#1f7a4a'; }
           else if (par && v >= par + 2) { g.fillStyle = '#fbe7e4'; rr(g, cx - 22, cy - 22, 44, 44, 10); g.fill(); g.fillStyle = '#c0392b'; }
