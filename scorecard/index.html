@@ -70,6 +70,7 @@ a{color:var(--green)}
 .hero img{height:110px;width:auto;margin-bottom:12px}
 .hero h1{font-size:40px;font-weight:800;letter-spacing:-.02em}
 .hero p{color:var(--muted);margin:8px auto 0;max-width:24em}
+.hero .rc{display:inline-block;margin-top:12px;padding:6px 14px;border-radius:20px;background:var(--green-soft);color:var(--green);font-weight:700;font-size:14.5px}
 .resume{background:var(--panel);border:2px solid var(--green);border-radius:18px;padding:14px 16px;text-align:left;width:100%;display:block;box-shadow:var(--shadow)}
 .resume small{color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:11.5px}
 .resume b{display:block;font-size:17px;margin-top:2px}
@@ -249,6 +250,7 @@ table.card{width:100%;border-collapse:separate;border-spacing:0;table-layout:fix
       <img src="icon-512.png" alt="" width="110" height="110" style="border-radius:26px">
       <h1>Scorecard</h1>
       <p>The free mini golf scorecard from Brooks Holt. Up to 6 players, works offline.</p>
+      <div class="rc hidden" id="roundCount"></div>
     </div>
     <div class="stack">
       <button class="resume hidden" id="resumeBtn"></button>
@@ -554,6 +556,31 @@ $('#restoreFile').addEventListener('change', function (e) {
   };
   rd.readAsText(f);
 });
+/* rounds counter: total finished rounds from GoatCounter's public counter (event "scorecard-finish").
+   Approximate (blockers, one count per person per session), so it's shown rounded down as "1,200+".
+   Hidden until the number is big enough, or if GoatCounter's counter setting is off. */
+var RC_MIN = 100;
+function showRoundCount(n) {
+  var el = $('#roundCount');
+  if (!(n >= RC_MIN)) { el.classList.add('hidden'); return; }
+  var step = n >= 10000 ? 1000 : n >= 1000 ? 100 : 10, r = Math.floor(n / step) * step;
+  el.textContent = '⛳ ' + r.toLocaleString('en-US') + '+ rounds scored with this app';
+  el.classList.remove('hidden');
+}
+function loadRoundCount() {
+  showRoundCount(store.roundCount);
+  if (navigator.onLine === false || !window.fetch) return;
+  var base = 'https://brooksholt.goatcounter.com/counter/';
+  function get(path) {
+    return fetch(base + encodeURIComponent(path) + '.json', { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+  }
+  get('scorecard-finish').catch(function () { return get('/scorecard-finish'); }).then(function (d) {
+    var n = parseInt(String(d && d.count || '').replace(/[^0-9]/g, ''), 10);
+    if (isNaN(n)) return;
+    store.roundCount = n; save(); showRoundCount(n);
+  }).catch(function () {});
+}
+loadRoundCount();
 var deferredInstall = null;
 window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredInstall = e; if (!$('#v-home').classList.contains('hidden')) renderHome(); });
 document.addEventListener('click', function (e) {
