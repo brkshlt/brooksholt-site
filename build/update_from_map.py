@@ -24,8 +24,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SITE = os.path.dirname(HERE)
 DATA = os.path.join(SITE, 'data')
 MAP_ID = '1qYIuVoSd9Bs1Y5IK0-3KHZZGOGd6T93h'
-KML_URL = f'https://www.google.com/maps/d/kml?forcekml=1&mid={MAP_ID}'
-UA = {'User-Agent': 'FindACourseSync/1.0'}
+# Two equivalent public exports of the same map. Google has served GitHub's servers a stale
+# copy before (Nov 2026), so each run downloads both with a cache-busting tag and keeps the newest.
+KML_URLS = [
+    f'https://www.google.com/maps/d/kml?forcekml=1&mid={MAP_ID}',
+    f'https://www.google.com/maps/d/kml?forcekml=1&mid={MAP_ID}&lid=CC7tCfrCyis',
+]
+UA = {'User-Agent': 'FindACourseSync/1.0', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache'}
+REPORT = {}  # written to data/update-log.json so the run can be checked without logging in
 NS = {'k': 'http://www.opengis.net/kml/2.2'}
 
 # Two different courses share a name; give each a town so they stay distinct.
@@ -62,7 +68,9 @@ TAG_RULES = [
     ('Mega Mini Golf', None, R(r'mega mini golf'), 1),
 ]
 
-LINE = re.compile(r'(\d{1,2}/\d{1,2}/\d{2,4})?(.*?)(https?://\S+)')
+# A video line is "date link". The link part also accepts typo'd prefixes like "htttps://"
+# or a bare "youtu.be/..." so a typo never turns a video into a section heading.
+LINE = re.compile(r'(\d{1,2}/\d{1,2}/\d{2,4})?(.*?)((?:[a-z]+:/+)?(?:www\.|m\.)?youtu\S*|https?://\S+)', re.I)
 GOOD_DATE = re.compile(r'\d{1,2}/\d{1,2}/20\d\d')
 TODAY = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
 
@@ -131,8 +139,39 @@ def state_of(lng, lat):
 
 
 # ---------- 1-2. read the map ----------
+def fetch_map():
+    """Download every export URL (cache-busted) and return the freshest parsed copy."""
+    best, sources = None, []
+    for i, base in enumerate(KML_URLS):
+        url = f'{base}&nocache={int(datetime.datetime.now().timestamp())}{i}'
+        try:
+            raw = fetch(url)
+            root = ET.fromstring(raw)
+        except Exception as e:
+            sources.append({'url': base, 'error': str(e)[:200]})
+            continue
+        text = html.unescape(raw.decode('utf-8', 'replace'))
+        dates = []
+        for d in re.findall(r'(\d{1,2})/(\d{1,2})/(20\d\d)', text):
+            iso = f'{d[2]}-{int(d[0]):02d}-{int(d[1]):02d}'
+            if iso <= TODAY:
+                dates.append(iso)
+        info = {'url': base, 'pins': len(root.findall('.//k:Placemark', NS)),
+                'videos': len(set(re.findall(r'(?:youtu\.?u?be/|[?&]v=)([\w-]{11})', text))),
+                'newest_date': max(dates) if dates else None}
+        sources.append(info)
+        score = (info['newest_date'] or '', info['videos'], info['pins'])
+        if best is None or score > best[0]:
+            best = (score, root, base)
+    REPORT['map_sources'] = sources
+    if best is None:
+        raise RuntimeError(f'could not download the map: {sources}')
+    REPORT['map_used'] = best[2]
+    return best[1]
+
+
 def read_map(issues):
-    root = ET.fromstring(fetch(KML_URL))
+    root = fetch_map()
     courses, seen = [], set()
     for p in root.iter('{%s}Placemark' % NS['k']):
         name = re.sub(r'\s+', ' ', p.findtext('k:name', default='', namespaces=NS)).strip()
@@ -153,6 +192,8 @@ def read_map(issues):
             if m:
                 date, note, url = m.group(1), m.group(2).strip(' :\t'), m.group(3)
                 vid = video_id(url)
+                if vid and not re.match(r'https://(www\.)?youtu(\.be|be\.com)/', url):
+                    issues.append(f'{name}: link typo (read correctly anyway, but please fix): {url}')
                 if not vid:
                     issues.append(f'{name}: link is not a YouTube video: {url}')
                     continue
@@ -266,6 +307,15 @@ def main():
         print(f'Merch: {len(items)} products for the home page')
     except Exception as e:  # a store hiccup should never block the course update
         issues.append(f'Merch store could not be read today ({e}); keeping yesterday\'s products')
+
+    newest = max((c['last'] for c in courses if c['last']), default=None)
+    REPORT.update({
+        'ran_at': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC'),
+        'courses': len(courses), 'videos': videos, 'newest_video_date': newest,
+        'things_to_check': issues,
+    })
+    save('update-log.json', REPORT, pretty=True)
+    print(f'Newest video date on the map: {newest}  (sources: {REPORT.get("map_sources")})')
 
     if issues:
         print(f'\n{len(issues)} things in the map to check:')
